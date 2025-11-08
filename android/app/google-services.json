@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "469599285395",
+    "project_id": "klaussified-e304a",
+    "storage_bucket": "klaussified-e304a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:469599285395:android:4246c665041bc8a5f71d66",
+        "android_client_info": {
+          "package_name": "me.nairdah.klaussified.klaussified"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "469599285395-vqs9vkjnfdrvccpnahv8e1m5tpt483rp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6_ZccvEEOsDczZDppW4FOevDVMuIr-uY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "469599285395-vqs9vkjnfdrvccpnahv8e1m5tpt483rp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,66 @@
+==========================================
+FIRESTORE SECURITY RULES - KLAUSSIFIED
+==========================================
+
+⚠️ IMPORTANT: Copy these rules to Firebase Console ⚠️
+Go to: https://console.firebase.google.com/project/klaussified-e304a/firestore/rules
+
+Then click "Publish" to activate them.
+
+==========================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users Collection
+    match /users/{userId} {
+      // Public read for username validation
+      allow read: if true;
+
+      // Can only create/update/delete own user document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Groups Collection
+    match /groups/{groupId} {
+      // Authenticated users can read any group
+      allow read: if request.auth != null;
+
+      // Any authenticated user can create a group
+      allow create: if request.auth != null;
+
+      // Only owner can update/delete group
+      allow update, delete: if request.auth != null &&
+        (resource.data.ownerId == request.auth.uid);
+
+      // Group Members Subcollection
+      match /members/{memberId} {
+        // Authenticated users can read members
+        allow read: if request.auth != null;
+
+        // Any authenticated user can write (for adding/updating members)
+        allow write: if request.auth != null;
+      }
+    }
+
+    // Invites Collection - NEW!
+    match /invites/{inviteId} {
+      // Anyone authenticated can read invites (needed to check for duplicates)
+      allow read: if request.auth != null;
+
+      // Can create invite if authenticated
+      allow create: if request.auth != null;
+
+      // Can update/delete own invites or invites sent to you
+      allow update, delete: if request.auth != null &&
+        (request.auth.uid == resource.data.invitedBy ||
+         request.auth.uid == resource.data.inviteeUserId);
+    }
+  }
+}
+
+==========================================
+END OF RULES
+==========================================

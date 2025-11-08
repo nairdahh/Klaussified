@@ -1,0 +1,91 @@
+name: klaussified
+description: A Secret Santa application for groups
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.0
+  cloud_functions: ^5.2.0
+  firebase_storage: ^12.3.6
+
+  # Google & Apple Sign-In
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.3
+
+  # State Management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.7
+
+  # Dependency Injection
+  get_it: ^8.0.2
+  injectable: ^2.5.0
+
+  # Routing
+  go_router: ^14.6.2
+
+  # UI & Animations
+  animations: ^2.0.11
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  lottie: ^3.1.3
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Validation
+  formz: ^0.7.0
+
+  # Icons
+  cupertino_icons: ^1.0.8
+  font_awesome_flutter: ^10.8.0
+
+  # Fonts
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+  # Code generation
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  injectable_generator: ^2.6.2
+
+  # Testing
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+
+  # Assets - Uncomment when you add images/animations
+  # assets:
+  #   - assets/images/
+  #   - assets/animations/
+
+  # Fonts - Using google_fonts package instead of local fonts
+  # Uncomment and add local fonts if you prefer not to use google_fonts
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: assets/fonts/Poppins-Regular.ttf
+  #       - asset: assets/fonts/Poppins-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Poppins-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Poppins-Medium.ttf
+  #         weight: 500
