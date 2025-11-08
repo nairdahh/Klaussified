@@ -61,6 +61,5 @@ firestore.rules
 storage.rules
 
 # Build outputs
-/web/
 /functions/node_modules/
 /functions/lib/
