@@ -32,6 +32,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     on<GroupInviteAcceptRequested>(_onGroupInviteAcceptRequested);
     on<GroupInviteDeclineRequested>(_onGroupInviteDeclineRequested);
     on<GroupMemberRemoveRequested>(_onGroupMemberRemoveRequested);
+    on<GroupLeaveRequested>(_onGroupLeaveRequested);
     on<_GroupsLoadedEvent>(_onGroupsLoadedEvent);
   }
 
@@ -39,6 +40,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     GroupLoadRequested event,
     Emitter<GroupState> emit,
   ) async {
+    print('🔄 [GroupBloc] Loading groups for userId: ${event.userId}');
     emit(const GroupLoading());
 
     await _activeGroupsSubscription?.cancel();
@@ -48,9 +50,19 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       _activeGroupsSubscription = _groupRepository
           .streamUserGroups(event.userId)
           .listen((activeGroups) {
+        print('📥 [GroupBloc] Active groups received: ${activeGroups.length} groups');
+        for (var group in activeGroups) {
+          print('   ✅ Active: ${group.name} (${group.id}) - memberIds: ${group.memberIds}');
+        }
+
         _closedGroupsSubscription = _groupRepository
             .streamClosedGroups(event.userId)
             .listen((closedGroups) {
+          print('📥 [GroupBloc] Closed groups received: ${closedGroups.length} groups');
+          for (var group in closedGroups) {
+            print('   🔒 Closed: ${group.name} (${group.id}) - memberIds: ${group.memberIds}');
+          }
+
           add(_GroupsLoadedEvent(
             activeGroups: activeGroups,
             closedGroups: closedGroups,
@@ -58,6 +70,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
         });
       });
     } catch (e) {
+      print('❌ [GroupBloc] Error loading groups: $e');
       emit(GroupError(message: e.toString()));
     }
   }
@@ -84,6 +97,9 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
 
       await _groupRepository.createGroup(
         name: event.name,
+        description: event.description,
+        location: event.location,
+        budget: event.budget,
         ownerId: user.uid,
         ownerName: user.displayName.isNotEmpty ? user.displayName : user.username,
         informationalDeadline: event.deadline,
@@ -220,19 +236,31 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     Emitter<GroupState> emit,
   ) async {
     try {
-      // Add user as member
+      print('🎉 [GroupBloc] Accepting invite ${event.inviteId} for group ${event.groupId}');
+
+      // Add user as member FIRST (this updates memberIds in the group document)
+      print('   ➕ Adding member to group...');
       await _groupRepository.addMember(
         groupId: event.groupId,
         userId: event.userId,
         displayName: event.displayName,
         username: event.username,
       );
+      print('   ✅ Member added successfully');
 
-      // Mark invite as accepted
+      // Mark invite as accepted AFTER (so member is added before invite disappears from UI)
+      print('   ✉️ Marking invite as accepted...');
       await _inviteRepository.acceptInvite(event.inviteId);
+      print('   ✅ Invite accepted');
 
+      // Small delay to ensure Firestore propagates the memberIds update to all listeners
+      print('   ⏳ Waiting for Firestore propagation...');
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      print('   🎊 Invite acceptance complete!');
       emit(const GroupOperationSuccess(message: 'Invitation accepted! You joined the group.'));
     } catch (e) {
+      print('❌ [GroupBloc] Error accepting invite: $e');
       emit(GroupError(message: e.toString()));
     }
   }
@@ -278,6 +306,32 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
 
       await _groupRepository.removeMember(event.groupId, event.userId);
       emit(const GroupOperationSuccess(message: 'Member removed from group'));
+    } catch (e) {
+      emit(GroupError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onGroupLeaveRequested(
+    GroupLeaveRequested event,
+    Emitter<GroupState> emit,
+  ) async {
+    try {
+      // Get group to verify user can leave
+      final group = await _groupRepository.getGroupById(event.groupId);
+      if (group == null) throw Exception('Group not found');
+
+      // Owner cannot leave, must delete the group instead
+      if (group.ownerId == event.userId) {
+        throw Exception('Group owner cannot leave. Delete the group instead.');
+      }
+
+      // Can only leave before group starts
+      if (!group.isPending) {
+        throw Exception('Cannot leave after group has started');
+      }
+
+      await _groupRepository.removeMember(event.groupId, event.userId);
+      emit(const GroupOperationSuccess(message: 'You have left the group'));
     } catch (e) {
       emit(GroupError(message: e.toString()));
     }

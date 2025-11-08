@@ -4,13 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:klaussified/business_logic/auth/auth_bloc.dart';
 import 'package:klaussified/business_logic/auth/auth_event.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
-import 'package:klaussified/business_logic/group/group_bloc.dart';
-import 'package:klaussified/business_logic/group/group_event.dart';
-import 'package:klaussified/business_logic/group/group_state.dart' as group_states;
 import 'package:klaussified/core/theme/colors.dart';
 import 'package:klaussified/core/routes/route_names.dart';
 import 'package:klaussified/data/models/group_model.dart';
 import 'package:klaussified/data/repositories/invite_repository.dart';
+import 'package:klaussified/data/repositories/group_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,17 +18,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Load groups when screen initializes
-    final authBloc = context.read<AuthBloc>();
-    if (authBloc.state is AuthAuthenticated) {
-      final user = (authBloc.state as AuthAuthenticated).user;
-      context.read<GroupBloc>().add(GroupLoadRequested(userId: user.uid));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
@@ -44,13 +31,16 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final user = authState.user;
+        // Create fresh repository instances on each build to ensure streams update
+        final groupRepository = GroupRepository();
+        final inviteRepository = InviteRepository();
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('Klaussified'),
             actions: [
               StreamBuilder<List>(
-                stream: InviteRepository().streamUserInvites(user.uid),
+                stream: inviteRepository.streamUserInvites(user.uid),
                 builder: (context, snapshot) {
                   final inviteCount = snapshot.data?.length ?? 0;
                   return Stack(
@@ -89,72 +79,94 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: () {
-                  context.read<AuthBloc>().add(const AuthLogoutRequested());
-                },
-                tooltip: 'Logout',
-              ),
             ],
           ),
-          body: BlocBuilder<GroupBloc, group_states.GroupState>(
-            builder: (context, groupState) {
-              if (groupState is group_states.GroupLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          body: StreamBuilder<List<GroupModel>>(
+            stream: groupRepository.streamUserGroups(user.uid),
+            builder: (context, activeSnapshot) {
+              return StreamBuilder<List<GroupModel>>(
+                stream: groupRepository.streamClosedGroups(user.uid),
+                builder: (context, closedSnapshot) {
+                  if (activeSnapshot.connectionState == ConnectionState.waiting ||
+                      closedSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              if (groupState is group_states.GroupError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                      const SizedBox(height: 16),
-                      Text(groupState.message),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<GroupBloc>().add(GroupLoadRequested(userId: user.uid));
-                        },
-                        child: const Text('Retry'),
+                  if (activeSnapshot.hasError || closedSnapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                          const SizedBox(height: 16),
+                          Text('Error loading groups: ${activeSnapshot.error ?? closedSnapshot.error}'),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              }
+                    );
+                  }
 
-              if (groupState is group_states.GroupsLoaded) {
-                return DefaultTabController(
-                  length: 2,
-                  child: Column(
-                    children: [
-                      Container(
-                        color: AppColors.backgroundWhite,
-                        child: const TabBar(
-                          tabs: [
-                            Tab(text: 'Active Groups'),
-                            Tab(text: 'Closed Groups'),
-                          ],
+                  final activeGroups = activeSnapshot.data ?? [];
+                  final closedGroups = closedSnapshot.data ?? [];
+
+                  return DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      children: [
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 800),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.backgroundWhite,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: TabBar(
+                                indicator: const BoxDecoration(
+                                  color: AppColors.christmasGreen,
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: AppColors.christmasGreen,
+                                      width: 3,
+                                    ),
+                                  ),
+                                ),
+                                labelColor: AppColors.snowWhite,
+                                unselectedLabelColor: AppColors.textSecondary,
+                                labelStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                tabs: const [
+                                  Tab(text: 'Active Groups'),
+                                  Tab(text: 'Closed Groups'),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            // Active Groups Tab
-                            _buildGroupsList(groupState.activeGroups, isActive: true),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              // Active Groups Tab
+                              _buildGroupsList(activeGroups, isActive: true),
 
-                            // Closed Groups Tab
-                            _buildGroupsList(groupState.closedGroups, isActive: false),
-                          ],
+                              // Closed Groups Tab
+                              _buildGroupsList(closedGroups, isActive: false),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return const Center(child: CircularProgressIndicator());
+                      ],
+                    ),
+                  );
+                },
+              );
             },
           ),
           floatingActionButton: FloatingActionButton.extended(
@@ -251,58 +263,76 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: groups.length,
-      itemBuilder: (context, index) {
-        final group = groups[index];
-        return _buildGroupCard(group);
-      },
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+            return _buildGroupCard(group);
+          },
+        ),
+      ),
     );
   }
 
   Widget _buildGroupCard(GroupModel group) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: group.isPending
-              ? AppColors.christmasGreen
-              : group.status == 'started'
-                  ? AppColors.christmasRed
-                  : AppColors.textSecondary,
-          child: Icon(
-            Icons.card_giftcard,
-            color: AppColors.snowWhite,
-          ),
-        ),
-        title: Text(
-          group.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text('${group.pickedCount}/${group.memberCount} picked'),
-            if (group.informationalDeadline != null)
-              Text(
-                'Deadline: ${_formatDate(group.informationalDeadline!)}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary.withValues(alpha: 0.7),
-                ),
+    return StreamBuilder<List>(
+      stream: GroupRepository().streamGroupMembers(group.id),
+      builder: (context, membersSnapshot) {
+        final members = membersSnapshot.data ?? [];
+        final memberCount = members.length;
+        final pickedCount = members.where((m) => m.hasPicked).length;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: group.isPending
+                  ? AppColors.christmasGreen
+                  : group.status == 'started'
+                      ? AppColors.christmasRed
+                      : AppColors.textSecondary,
+              child: Icon(
+                Icons.card_giftcard,
+                color: AppColors.snowWhite,
               ),
-          ],
-        ),
-        trailing: _buildStatusChip(group.status),
-        onTap: () {
-          context.push('/group/${group.id}');
-        },
-      ),
+            ),
+            title: Text(
+              group.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  group.isPending
+                      ? '$memberCount ${memberCount == 1 ? 'member' : 'members'}'
+                      : '$pickedCount/$memberCount picked',
+                ),
+                if (group.informationalDeadline != null)
+                  Text(
+                    'Deadline: ${_formatDate(group.informationalDeadline!)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary.withValues(alpha: 0.7),
+                    ),
+                  ),
+              ],
+            ),
+            trailing: _buildStatusChip(group.status),
+            onTap: () {
+              context.push('/group/${group.id}');
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -339,6 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       backgroundColor: color,
       padding: EdgeInsets.zero,
+      side: BorderSide.none,
     );
   }
 

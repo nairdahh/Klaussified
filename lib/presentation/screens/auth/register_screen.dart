@@ -180,11 +180,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Display Name Field (Optional)
+                            // Real Name Field (Optional)
                             TextFormField(
                               controller: _displayNameController,
                               decoration: const InputDecoration(
-                                labelText: 'Display Name (Optional)',
+                                labelText: 'Real Name (Optional)',
                                 prefixIcon: Icon(Icons.badge),
                               ),
                               enabled: !isLoading,

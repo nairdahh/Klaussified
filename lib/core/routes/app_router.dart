@@ -9,6 +9,7 @@ import 'package:klaussified/presentation/screens/home/home_screen.dart';
 import 'package:klaussified/presentation/screens/group/create_group_screen.dart';
 import 'package:klaussified/presentation/screens/group/group_details_screen.dart';
 import 'package:klaussified/presentation/screens/group/edit_profile_details_screen.dart';
+import 'package:klaussified/presentation/screens/group/edit_group_screen.dart';
 import 'package:klaussified/presentation/screens/secret_santa/pick_screen.dart';
 import 'package:klaussified/presentation/screens/secret_santa/reveal_screen.dart';
 import 'package:klaussified/presentation/screens/invitations/invitations_screen.dart';
@@ -125,6 +126,18 @@ class AppRouter {
           return MaterialPage(
             key: state.pageKey,
             child: EditProfileDetailsScreen(groupId: groupId),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/group/:id/edit',
+        name: 'editGroup',
+        pageBuilder: (context, state) {
+          final groupId = state.pathParameters['id']!;
+          return MaterialPage(
+            key: state.pageKey,
+            child: EditGroupScreen(groupId: groupId),
           );
         },
       ),

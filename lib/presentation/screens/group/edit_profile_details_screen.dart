@@ -58,19 +58,25 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
 
       if (mounted) {
         setState(() {
-          _realNameController.text = member.profileDetails.realName;
+          // Use member's real name if set, otherwise use user's displayName as default
+          _realNameController.text = member.profileDetails.realName.isNotEmpty
+              ? member.profileDetails.realName
+              : user.displayName;
           _hobbiesController.text = member.profileDetails.hobbies;
           _wishesController.text = member.profileDetails.wishes;
         });
       }
     } catch (e) {
-      // Member not found or error loading
+      // Member not found or error loading - use displayName as default
+      if (mounted) {
+        setState(() {
+          _realNameController.text = user.displayName;
+        });
+      }
     }
   }
 
   Future<void> _saveDetails() async {
-    if (!_formKey.currentState!.validate()) return;
-
     final authBloc = context.read<AuthBloc>();
     if (authBloc.state is! AuthAuthenticated) return;
 
@@ -170,17 +176,11 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
               TextFormField(
                 controller: _realNameController,
                 decoration: const InputDecoration(
-                  labelText: 'Real Name *',
+                  labelText: 'Real Name (Optional)',
                   hintText: 'Your full name',
                   prefixIcon: Icon(Icons.person),
                   helperText: 'So your Secret Santa knows who you are',
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your real name';
-                  }
-                  return null;
-                },
                 enabled: !_isLoading,
               ),
               const SizedBox(height: 20),
@@ -189,18 +189,12 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
               TextFormField(
                 controller: _hobbiesController,
                 decoration: const InputDecoration(
-                  labelText: 'Hobbies & Interests *',
+                  labelText: 'Hobbies & Interests (Optional)',
                   hintText: 'e.g., Reading, Cooking, Gaming, Sports...',
                   prefixIcon: Icon(Icons.favorite),
                   helperText: 'What do you enjoy doing?',
                 ),
                 maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please share your hobbies and interests';
-                  }
-                  return null;
-                },
                 enabled: !_isLoading,
               ),
               const SizedBox(height: 20),
@@ -209,18 +203,12 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
               TextFormField(
                 controller: _wishesController,
                 decoration: const InputDecoration(
-                  labelText: 'Gift Wishes & Hints *',
+                  labelText: 'Gift Wishes & Hints (Optional)',
                   hintText: 'e.g., I love chocolate, prefer practical gifts, size M...',
                   prefixIcon: Icon(Icons.card_giftcard),
                   helperText: 'Help your Secret Santa with gift ideas',
                 ),
                 maxLines: 4,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please provide some gift hints';
-                  }
-                  return null;
-                },
                 enabled: !_isLoading,
               ),
               const SizedBox(height: 32),

@@ -31,15 +31,20 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
   void initState() {
     super.initState();
 
-    // Create shuffled list with selected name at the end
-    _shuffledNames = List.from(widget.allNames)..shuffle(_random);
-
-    // Ensure selected name appears multiple times for smooth animation
+    // Create a long list with repeated names for smooth animation
+    // The list needs to be long enough to cover the entire animation duration
     final extendedList = <String>[];
-    for (int i = 0; i < 20; i++) {
-      extendedList.add(_shuffledNames[i % _shuffledNames.length]);
+
+    // Repeat the shuffled names enough times to fill the animation
+    // We want at least 50 items to ensure smooth scrolling even with few members
+    final minItems = 50;
+    final shuffledBase = List<String>.from(widget.allNames)..shuffle(_random);
+
+    while (extendedList.length < minItems) {
+      extendedList.addAll(shuffledBase);
     }
-    // Add selected name at the end
+
+    // Add selected name at the end (this is where animation will stop)
     extendedList.add(widget.selectedName);
     _shuffledNames = extendedList;
 

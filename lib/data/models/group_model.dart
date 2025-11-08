@@ -16,6 +16,9 @@ class GroupModel with _$GroupModel {
     required String ownerName,
     @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
         required DateTime createdAt,
+    @Default('') String description, // Event details/description
+    @Default('') String location, // Event location
+    @Default('') String budget, // Suggested budget
     @Default(AppConstants.statusPending) String status,
     @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
         DateTime? startedAt,

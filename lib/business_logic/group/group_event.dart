@@ -17,10 +17,19 @@ class GroupLoadRequested extends GroupEvent {
 
 class GroupCreateRequested extends GroupEvent {
   final String name;
+  final String description;
+  final String location;
+  final String budget;
   final DateTime? deadline;
-  const GroupCreateRequested({required this.name, this.deadline});
+  const GroupCreateRequested({
+    required this.name,
+    this.description = '',
+    this.location = '',
+    this.budget = '',
+    this.deadline,
+  });
   @override
-  List<Object?> get props => [name, deadline];
+  List<Object?> get props => [name, description, location, budget, deadline];
 }
 
 class GroupStartRequested extends GroupEvent {
@@ -121,6 +130,17 @@ class GroupMemberRemoveRequested extends GroupEvent {
   final String groupId;
   final String userId;
   const GroupMemberRemoveRequested({
+    required this.groupId,
+    required this.userId,
+  });
+  @override
+  List<Object?> get props => [groupId, userId];
+}
+
+class GroupLeaveRequested extends GroupEvent {
+  final String groupId;
+  final String userId;
+  const GroupLeaveRequested({
     required this.groupId,
     required this.userId,
   });

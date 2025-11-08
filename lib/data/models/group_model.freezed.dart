@@ -26,6 +26,10 @@ mixin _$GroupModel {
   String get ownerName => throw _privateConstructorUsedError;
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime get createdAt => throw _privateConstructorUsedError;
+  String get description =>
+      throw _privateConstructorUsedError; // Event details/description
+  String get location => throw _privateConstructorUsedError; // Event location
+  String get budget => throw _privateConstructorUsedError; // Suggested budget
   String get status => throw _privateConstructorUsedError;
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime? get startedAt => throw _privateConstructorUsedError;
@@ -62,6 +66,9 @@ abstract class $GroupModelCopyWith<$Res> {
       String ownerName,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime createdAt,
+      String description,
+      String location,
+      String budget,
       String status,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime? startedAt,
@@ -96,6 +103,9 @@ class _$GroupModelCopyWithImpl<$Res, $Val extends GroupModel>
     Object? ownerId = null,
     Object? ownerName = null,
     Object? createdAt = null,
+    Object? description = null,
+    Object? location = null,
+    Object? budget = null,
     Object? status = null,
     Object? startedAt = freezed,
     Object? informationalDeadline = freezed,
@@ -126,6 +136,18 @@ class _$GroupModelCopyWithImpl<$Res, $Val extends GroupModel>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      description: null == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String,
+      location: null == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as String,
+      budget: null == budget
+          ? _value.budget
+          : budget // ignore: cast_nullable_to_non_nullable
+              as String,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -177,6 +199,9 @@ abstract class _$$GroupModelImplCopyWith<$Res>
       String ownerName,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime createdAt,
+      String description,
+      String location,
+      String budget,
       String status,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime? startedAt,
@@ -209,6 +234,9 @@ class __$$GroupModelImplCopyWithImpl<$Res>
     Object? ownerId = null,
     Object? ownerName = null,
     Object? createdAt = null,
+    Object? description = null,
+    Object? location = null,
+    Object? budget = null,
     Object? status = null,
     Object? startedAt = freezed,
     Object? informationalDeadline = freezed,
@@ -239,6 +267,18 @@ class __$$GroupModelImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      description: null == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String,
+      location: null == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as String,
+      budget: null == budget
+          ? _value.budget
+          : budget // ignore: cast_nullable_to_non_nullable
+              as String,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -285,6 +325,9 @@ class _$GroupModelImpl extends _GroupModel {
       required this.ownerName,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       required this.createdAt,
+      this.description = '',
+      this.location = '',
+      this.budget = '',
       this.status = AppConstants.statusPending,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       this.startedAt,
@@ -314,6 +357,18 @@ class _$GroupModelImpl extends _GroupModel {
   @override
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   final DateTime createdAt;
+  @override
+  @JsonKey()
+  final String description;
+// Event details/description
+  @override
+  @JsonKey()
+  final String location;
+// Event location
+  @override
+  @JsonKey()
+  final String budget;
+// Suggested budget
   @override
   @JsonKey()
   final String status;
@@ -346,7 +401,7 @@ class _$GroupModelImpl extends _GroupModel {
 
   @override
   String toString() {
-    return 'GroupModel(id: $id, name: $name, ownerId: $ownerId, ownerName: $ownerName, createdAt: $createdAt, status: $status, startedAt: $startedAt, informationalDeadline: $informationalDeadline, revealDate: $revealDate, revealedAt: $revealedAt, memberCount: $memberCount, pickedCount: $pickedCount, memberIds: $memberIds)';
+    return 'GroupModel(id: $id, name: $name, ownerId: $ownerId, ownerName: $ownerName, createdAt: $createdAt, description: $description, location: $location, budget: $budget, status: $status, startedAt: $startedAt, informationalDeadline: $informationalDeadline, revealDate: $revealDate, revealedAt: $revealedAt, memberCount: $memberCount, pickedCount: $pickedCount, memberIds: $memberIds)';
   }
 
   @override
@@ -361,6 +416,11 @@ class _$GroupModelImpl extends _GroupModel {
                 other.ownerName == ownerName) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.location, location) ||
+                other.location == location) &&
+            (identical(other.budget, budget) || other.budget == budget) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.startedAt, startedAt) ||
                 other.startedAt == startedAt) &&
@@ -387,6 +447,9 @@ class _$GroupModelImpl extends _GroupModel {
       ownerId,
       ownerName,
       createdAt,
+      description,
+      location,
+      budget,
       status,
       startedAt,
       informationalDeadline,
@@ -420,6 +483,9 @@ abstract class _GroupModel extends GroupModel {
       required final String ownerName,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       required final DateTime createdAt,
+      final String description,
+      final String location,
+      final String budget,
       final String status,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       final DateTime? startedAt,
@@ -448,6 +514,12 @@ abstract class _GroupModel extends GroupModel {
   @override
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime get createdAt;
+  @override
+  String get description; // Event details/description
+  @override
+  String get location; // Event location
+  @override
+  String get budget; // Suggested budget
   @override
   String get status;
   @override

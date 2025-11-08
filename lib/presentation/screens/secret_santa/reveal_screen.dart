@@ -37,13 +37,11 @@ class _RevealScreenState extends State<RevealScreen> {
       appBar: AppBar(
         title: const Text('Your Secret Santa'),
         backgroundColor: AppColors.christmasGreen,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: () => context.go('/home'),
-            tooltip: 'Go Home',
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/group/${widget.groupId}'),
+          tooltip: 'Back to Group',
+        ),
       ),
       body: StreamBuilder<List<GroupMemberModel>>(
         stream: _groupRepository.streamGroupMembers(widget.groupId),

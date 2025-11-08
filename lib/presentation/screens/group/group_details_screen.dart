@@ -8,7 +8,9 @@ import 'package:klaussified/business_logic/group/group_event.dart';
 import 'package:klaussified/core/theme/colors.dart';
 import 'package:klaussified/data/repositories/group_repository.dart';
 import 'package:klaussified/data/repositories/user_repository.dart';
+import 'package:klaussified/data/repositories/invite_repository.dart';
 import 'package:klaussified/data/models/group_member_model.dart';
+import 'package:klaussified/data/models/invite_model.dart';
 
 class GroupDetailsScreen extends StatelessWidget {
   final String groupId;
@@ -25,6 +27,33 @@ class GroupDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Group Details'),
         backgroundColor: AppColors.christmasGreen,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+          tooltip: 'Back',
+        ),
+        actions: [
+          StreamBuilder(
+            stream: groupRepo.streamGroup(groupId),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              final group = snapshot.data!;
+              final isOwner = group.ownerId == currentUserId;
+
+              return IconButton(
+                icon: const Icon(Icons.info_outline),
+                onPressed: () => _showGroupInfoDialog(context, group, isOwner),
+                tooltip: 'Group Information',
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder(
         stream: groupRepo.streamGroup(groupId),
@@ -44,6 +73,11 @@ class GroupDetailsScreen extends StatelessWidget {
               }
 
               final members = membersSnapshot.data!;
+
+              // Calculate actual counts from members list
+              final actualMemberCount = members.length;
+              final actualPickedCount = members.where((m) => m.hasPicked).length;
+
               GroupMemberModel? currentMember;
               try {
                 currentMember = members.firstWhere((m) => m.userId == currentUserId);
@@ -51,8 +85,11 @@ class GroupDetailsScreen extends StatelessWidget {
                 // Member not found, currentMember remains null
               }
 
-              return Column(
-                children: [
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    children: [
                   // Group Info Card - Full Width
                   Container(
                     width: double.infinity,
@@ -81,9 +118,21 @@ class GroupDetailsScreen extends StatelessWidget {
                             const Divider(height: 24),
                             _buildInfoRow(Icons.info_outline, 'Status', group.status.toUpperCase()),
                             const SizedBox(height: 8),
-                            _buildInfoRow(Icons.people, 'Members', '${group.memberCount}'),
+                            if (group.description.isNotEmpty) ...[
+                              _buildInfoRow(Icons.description, 'Description', group.description),
+                              const SizedBox(height: 8),
+                            ],
+                            if (group.location.isNotEmpty) ...[
+                              _buildInfoRow(Icons.location_on, 'Location', group.location),
+                              const SizedBox(height: 8),
+                            ],
+                            if (group.budget.isNotEmpty) ...[
+                              _buildInfoRow(Icons.attach_money, 'Budget', group.budget),
+                              const SizedBox(height: 8),
+                            ],
+                            _buildInfoRow(Icons.people, 'Members', '$actualMemberCount'),
                             const SizedBox(height: 8),
-                            _buildInfoRow(Icons.check_circle, 'Picked', '${group.pickedCount}/${group.memberCount}'),
+                            _buildInfoRow(Icons.check_circle, 'Picked', '$actualPickedCount/$actualMemberCount'),
                             if (group.informationalDeadline != null) ...[
                               const SizedBox(height: 8),
                               _buildInfoRow(
@@ -118,18 +167,36 @@ class GroupDetailsScreen extends StatelessWidget {
                           ),
                         const SizedBox(height: 12),
 
-                        // Start Button (only for owner with 3+ members)
-                        if (group.isPending && isOwner && group.memberCount >= 3)
+                        // Start Button (only for owner with 2+ members, disabled until 3+)
+                        if (group.isPending && isOwner && actualMemberCount >= 2)
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed: () {
-                                context.read<GroupBloc>().add(GroupStartRequested(groupId: groupId));
-                              },
+                              onPressed: actualMemberCount < 3
+                                  ? null
+                                  : () => _showStartConfirmationDialog(context, groupId, actualMemberCount),
                               icon: const Icon(Icons.play_arrow),
-                              label: const Text('Start Secret Santa'),
+                              label: Text(actualMemberCount < 3
+                                  ? 'Need ${3 - actualMemberCount} more member(s) to start'
+                                  : 'Start Secret Santa'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.christmasRed,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
+                          ),
+
+                        // Leave Group Button (only for non-owners in pending state)
+                        if (group.isPending && !isOwner)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showLeaveGroupDialog(context, groupId, currentUserId, group.name),
+                              icon: const Icon(Icons.exit_to_app),
+                              label: const Text('Leave Group'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.error,
+                                side: const BorderSide(color: AppColors.error),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                             ),
@@ -141,72 +208,227 @@ class GroupDetailsScreen extends StatelessWidget {
                   // Pick/Reveal/Edit Buttons
                   if (currentMember != null && group.isStarted && !currentMember.hasPicked)
                     Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: ElevatedButton(
-                        onPressed: () => context.push('/group/$groupId/pick'),
-                        child: const Text('Pick Your Secret Santa'),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => context.push('/group/$groupId/pick'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Pick Your Secret Santa'),
+                        ),
                       ),
                     ),
                   if (currentMember != null && currentMember.hasPicked && currentMember.assignedToUserId != null)
                     Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: ElevatedButton(
-                        onPressed: () => context.push('/group/$groupId/reveal'),
-                        child: const Text('View Your Assignment'),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => context.push('/group/$groupId/reveal'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('View Your Assignment'),
+                        ),
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ElevatedButton(
-                      onPressed: () => context.push('/group/$groupId/edit-details'),
-                      child: const Text('Edit My Profile Details'),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => context.push('/group/$groupId/edit-details'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Edit My Profile Details'),
+                      ),
                     ),
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: members.length,
-                      itemBuilder: (context, index) {
-                        final member = members[index];
-                        final displayName = member.displayName.isNotEmpty
-                            ? member.displayName
-                            : member.username;
-                        final canRemove = isOwner &&
-                                         group.isPending &&
-                                         member.userId != currentUserId;
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: AppColors.christmasGreen,
-                              child: Text(
-                                displayName[0].toUpperCase(),
-                                style: const TextStyle(
-                                  color: AppColors.snowWhite,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                  // Completion Message when all members have picked
+                  if (group.isStarted &&
+                      actualPickedCount == actualMemberCount &&
+                      actualMemberCount >= 3)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Card(
+                        color: AppColors.christmasGreen.withValues(alpha: 0.1),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: AppColors.christmasGreen, width: 2),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.celebration,
+                                size: 48,
+                                color: AppColors.christmasGreen,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                '🎉 All Members Have Been Picked! 🎉',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.christmasGreen,
+                                    ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                group.revealDate != null
+                                    ? 'The creator will be able to archive the group after ${group.revealDate!.day}/${group.revealDate!.month}/${group.revealDate!.year} and all assignments will be revealed. Until then, Merry Christmas and we hope you enjoy your gifts!'
+                                    : 'The group is now complete! All members have their assignments. The creator will be able to archive the group soon. Merry Christmas and we hope you enjoy your gifts!',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.textPrimary,
+                                      height: 1.5,
+                                    ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  Expanded(
+                    child: StreamBuilder<List<InviteModel>>(
+                      stream: InviteRepository().streamGroupInvites(groupId),
+                      builder: (context, invitesSnapshot) {
+                        final invites = invitesSnapshot.data ?? [];
+
+                        return ListView(
+                          children: [
+                            // Members Section Header
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.people, color: AppColors.christmasGreen),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Members (${members.length})',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.christmasGreen,
+                                        ),
+                                  ),
+                                ],
                               ),
                             ),
-                            title: Text(
-                              displayName,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            subtitle: Text('@${member.username}'),
-                            trailing: canRemove
-                                ? IconButton(
-                                    icon: const Icon(Icons.person_remove, color: AppColors.error),
-                                    onPressed: () => _removeMember(context, groupId, member.userId, displayName),
-                                    tooltip: 'Remove member',
-                                  )
-                                : (member.hasPicked
-                                    ? const Icon(Icons.check_circle, color: AppColors.christmasGreen)
-                                    : Icon(Icons.pending, color: AppColors.textSecondary.withValues(alpha: 0.5))),
-                          ),
+
+                            // Members List
+                            ...members.map((member) {
+                              final displayName = member.displayName.isNotEmpty
+                                  ? member.displayName
+                                  : member.username;
+                              final canRemove = isOwner &&
+                                               group.isPending &&
+                                               member.userId != currentUserId;
+
+                              return Card(
+                                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppColors.christmasGreen,
+                                    child: Text(
+                                      displayName[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: AppColors.snowWhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    displayName,
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text('@${member.username}'),
+                                  trailing: canRemove
+                                      ? IconButton(
+                                          icon: const Icon(Icons.person_remove, color: AppColors.error),
+                                          onPressed: () => _removeMember(context, groupId, member.userId, displayName),
+                                          tooltip: 'Remove member',
+                                        )
+                                      : (member.hasPicked
+                                          ? const Icon(Icons.check_circle, color: AppColors.christmasGreen)
+                                          : Icon(Icons.pending, color: AppColors.textSecondary.withValues(alpha: 0.5))),
+                                ),
+                              );
+                            }),
+
+                            // Invited Members Section (only show if there are pending invites)
+                            if (invites.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.mail_outline, color: AppColors.christmasRed),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Invited Members (${invites.length})',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.christmasRed,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Invited Members List
+                              ...invites.map((invite) {
+                                // Can cancel if owner OR if current user invited this person
+                                final canCancelInvite = isOwner || invite.invitedBy == currentUserId;
+
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: AppColors.christmasRed.withValues(alpha: 0.2),
+                                      child: const Icon(
+                                        Icons.mail_outline,
+                                        color: AppColors.christmasRed,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      invite.inviteeUsername ?? 'Unknown User',
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: Text(
+                                      'Invited by ${invite.invitedByName}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    trailing: canCancelInvite
+                                        ? IconButton(
+                                            icon: const Icon(Icons.cancel, color: AppColors.error),
+                                            onPressed: () => _cancelInvite(context, invite.id, invite.inviteeUsername ?? 'this user'),
+                                            tooltip: 'Cancel invitation',
+                                          )
+                                        : const Icon(
+                                            Icons.hourglass_empty,
+                                            color: AppColors.christmasRed,
+                                          ),
+                                  ),
+                                );
+                              }),
+                            ],
+
+                            const SizedBox(height: 16),
+                          ],
                         );
                       },
                     ),
                   ),
-                ],
+                    ],
+                  ),
+                ),
               );
             },
           );
@@ -385,6 +607,145 @@ class GroupDetailsScreen extends StatelessWidget {
     }
   }
 
+  void _showLeaveGroupDialog(BuildContext context, String groupId, String userId, String groupName) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error),
+            SizedBox(width: 12),
+            Text('Leave Group'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to leave "$groupName"? You can only leave before the Secret Santa starts.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<GroupBloc>().add(
+                    GroupLeaveRequested(
+                      groupId: groupId,
+                      userId: userId,
+                    ),
+                  );
+              // Navigate back to home after leaving
+              context.go('/home');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStartConfirmationDialog(BuildContext context, String groupId, int memberCount) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.christmasRed),
+            SizedBox(width: 12),
+            Text('Start Secret Santa?'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You are about to start the Secret Santa with $memberCount members.',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '⚠️ After starting:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            const Text('• No more members can be invited'),
+            const Text('• Members can start picking their Secret Santa'),
+            const Text('• This action cannot be undone'),
+            const SizedBox(height: 16),
+            const Text(
+              'Make sure all desired members have joined!',
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.christmasRed),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<GroupBloc>().add(GroupStartRequested(groupId: groupId));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.christmasRed,
+            ),
+            child: const Text('Start Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _cancelInvite(BuildContext context, String inviteId, String username) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error),
+            SizedBox(width: 12),
+            Text('Cancel Invitation'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to cancel the invitation for $username?',
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              // Delete the invite using InviteRepository
+              InviteRepository().deleteInvite(inviteId);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Invitation cancelled'),
+                  backgroundColor: AppColors.christmasGreen,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _removeMember(BuildContext context, String groupId, String userId, String memberName) {
     showDialog(
       context: context,
@@ -425,6 +786,171 @@ class GroupDetailsScreen extends StatelessWidget {
               backgroundColor: AppColors.error,
             ),
             child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGroupInfoDialog(BuildContext context, dynamic group, bool isOwner) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline, color: AppColors.christmasGreen),
+            const SizedBox(width: 12),
+            Text(isOwner ? 'Group Information' : 'Group Details'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDialogInfoRow('Group Name', group.name),
+              const Divider(height: 20),
+              _buildDialogInfoRow('Creator', group.ownerName),
+              const Divider(height: 20),
+              _buildDialogInfoRow('Created On', _formatDate(group.createdAt)),
+              const Divider(height: 20),
+              _buildDialogInfoRow('Status', group.status.toUpperCase()),
+              if (group.description.isNotEmpty) ...[
+                const Divider(height: 20),
+                _buildDialogInfoRow('Description', group.description),
+              ],
+              if (group.location.isNotEmpty) ...[
+                const Divider(height: 20),
+                _buildDialogInfoRow('Location', group.location),
+              ],
+              if (group.budget.isNotEmpty) ...[
+                const Divider(height: 20),
+                _buildDialogInfoRow('Budget', group.budget),
+              ],
+              const Divider(height: 20),
+              _buildDialogInfoRow(
+                'Pick Deadline',
+                group.informationalDeadline != null
+                    ? _formatDate(group.informationalDeadline!)
+                    : 'None',
+              ),
+              const Divider(height: 20),
+              _buildDialogInfoRow('Reveal Date', _formatDate(group.revealDate)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          if (isOwner) ...[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                context.push('/group/${group.id}/edit');
+              },
+              child: const Text('Modify Details'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _showDeleteGroupDialog(context, group.id, group.name);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.error,
+              ),
+              child: const Text('Delete Group'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDialogInfoRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _showDeleteGroupDialog(BuildContext context, String groupId, String groupName) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error),
+            SizedBox(width: 12),
+            Text('Delete Group'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete "$groupName"?\n\nThis action cannot be undone. All members will lose access to this group.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+
+              // Delete the group using repository
+              try {
+                final groupRepo = GroupRepository();
+                await groupRepo.deleteGroup(groupId);
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$groupName deleted successfully'),
+                    backgroundColor: AppColors.christmasGreen,
+                  ),
+                );
+
+                // Navigate back to home
+                context.go('/');
+              } catch (e) {
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error deleting group: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Delete'),
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import 'package:klaussified/business_logic/auth/auth_bloc.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
 import 'package:klaussified/business_logic/group/group_bloc.dart';
 import 'package:klaussified/business_logic/group/group_event.dart';
+import 'package:klaussified/business_logic/group/group_state.dart';
 import 'package:klaussified/core/theme/colors.dart';
 import 'package:klaussified/data/repositories/invite_repository.dart';
 import 'package:klaussified/data/models/invite_model.dart';
@@ -18,14 +19,27 @@ class InvitationsScreen extends StatelessWidget {
     final currentUserId = (authState as AuthAuthenticated).user.uid;
     final inviteRepo = InviteRepository();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Invitations'),
-        backgroundColor: AppColors.christmasGreen,
-      ),
-      body: StreamBuilder<List<InviteModel>>(
-        stream: inviteRepo.streamUserInvites(currentUserId),
-        builder: (context, snapshot) {
+    return BlocListener<GroupBloc, GroupState>(
+      listener: (context, state) {
+        if (state is GroupOperationSuccess) {
+          // Success message already shown in _acceptInvite/_declineInvite
+        } else if (state is GroupError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Invitations'),
+          backgroundColor: AppColors.christmasGreen,
+        ),
+        body: StreamBuilder<List<InviteModel>>(
+          stream: inviteRepo.streamUserInvites(currentUserId),
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -180,8 +194,8 @@ class InvitationsScreen extends StatelessWidget {
                                 context,
                                 invite,
                                 currentUserId,
-                                (authState as AuthAuthenticated).user.displayName,
-                                (authState).user.username,
+                                authState.user.displayName,
+                                authState.user.username,
                               ),
                               icon: const Icon(Icons.check),
                               label: const Text('Accept'),
@@ -200,6 +214,7 @@ class InvitationsScreen extends StatelessWidget {
             },
           );
         },
+      ),
       ),
     );
   }
@@ -227,6 +242,10 @@ class InvitationsScreen extends StatelessWidget {
     String displayName,
     String username,
   ) {
+    // Capture the navigator before async operations
+    final navigator = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
     context.read<GroupBloc>().add(
           GroupInviteAcceptRequested(
             inviteId: invite.id,
@@ -237,14 +256,14 @@ class InvitationsScreen extends StatelessWidget {
           ),
         );
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
         content: Text('Joined ${invite.groupName}!'),
         backgroundColor: AppColors.christmasGreen,
         action: SnackBarAction(
           label: 'VIEW',
           textColor: AppColors.snowWhite,
-          onPressed: () => context.push('/group/${invite.groupId}'),
+          onPressed: () => navigator.push('/group/${invite.groupId}'),
         ),
       ),
     );

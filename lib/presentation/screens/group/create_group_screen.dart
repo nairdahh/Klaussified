@@ -16,11 +16,17 @@ class CreateGroupScreen extends StatefulWidget {
 class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _budgetController = TextEditingController();
   DateTime? _selectedDeadline;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _budgetController.dispose();
     super.dispose();
   }
 
@@ -43,6 +49,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       context.read<GroupBloc>().add(
             GroupCreateRequested(
               name: _nameController.text.trim(),
+              description: _descriptionController.text.trim(),
+              location: _locationController.text.trim(),
+              budget: _budgetController.text.trim(),
               deadline: _selectedDeadline,
             ),
           );
@@ -107,6 +116,37 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               }
                               return null;
                             },
+                            enabled: !isLoading,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _descriptionController,
+                            decoration: const InputDecoration(
+                              labelText: 'Description (Optional)',
+                              prefixIcon: Icon(Icons.description),
+                              hintText: 'e.g., Office Christmas party exchange',
+                            ),
+                            maxLines: 2,
+                            enabled: !isLoading,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _locationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Location (Optional)',
+                              prefixIcon: Icon(Icons.location_on),
+                              hintText: 'e.g., Office lobby or online',
+                            ),
+                            enabled: !isLoading,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _budgetController,
+                            decoration: const InputDecoration(
+                              labelText: 'Budget (Optional)',
+                              prefixIcon: Icon(Icons.attach_money),
+                              hintText: 'e.g., \$20-30',
+                            ),
                             enabled: !isLoading,
                           ),
                           const SizedBox(height: 24),

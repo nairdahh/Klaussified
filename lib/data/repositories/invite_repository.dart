@@ -40,22 +40,33 @@ class InviteRepository {
     return _firestoreService.invitesCollection
         .where('inviteeUserId', isEqualTo: userId)
         .where('status', isEqualTo: AppConstants.inviteStatusPending)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => InviteModel.fromFirestore(doc))
-            .where((invite) => !invite.isExpired)
-            .toList());
+        .map((snapshot) {
+          final invites = snapshot.docs
+              .map((doc) => InviteModel.fromFirestore(doc))
+              .where((invite) => !invite.isExpired)
+              .toList();
+          // Sort in memory to avoid composite index requirement
+          invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return invites;
+        });
   }
 
-  // Get all invites for a group
+  // Get all pending invites for a group
   Stream<List<InviteModel>> streamGroupInvites(String groupId) {
     return _firestoreService.invitesCollection
         .where('groupId', isEqualTo: groupId)
-        .orderBy('createdAt', descending: true)
+        .where('status', isEqualTo: AppConstants.inviteStatusPending)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => InviteModel.fromFirestore(doc)).toList());
+        .map((snapshot) {
+          final invites = snapshot.docs
+              .map((doc) => InviteModel.fromFirestore(doc))
+              .where((invite) => !invite.isExpired)
+              .toList();
+          // Sort in memory to avoid composite index requirement
+          invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return invites;
+        });
   }
 
   // Accept an invite

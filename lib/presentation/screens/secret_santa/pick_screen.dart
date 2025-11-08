@@ -65,10 +65,20 @@ class _PickScreenState extends State<PickScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Get available members (not picked yet and not self)
+      // Get all members
       final members = await _groupRepository.streamGroupMembers(widget.groupId).first;
+
+      // Get list of already assigned user IDs
+      final alreadyAssigned = members
+          .where((m) => m.assignedToUserId != null)
+          .map((m) => m.assignedToUserId!)
+          .toSet();
+
+      // Available members are those who:
+      // 1. Are not the current user
+      // 2. Haven't been assigned to anyone yet
       final available = members
-          .where((m) => m.userId != user.uid && !m.hasPicked)
+          .where((m) => m.userId != user.uid && !alreadyAssigned.contains(m.userId))
           .toList();
 
       if (available.isEmpty) {
