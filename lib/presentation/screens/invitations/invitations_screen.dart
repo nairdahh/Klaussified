@@ -155,21 +155,6 @@ class InvitationsScreen extends StatelessWidget {
                                   color: AppColors.textSecondary,
                                 ),
                           ),
-                          if (invite.expiresAt != null) ...[
-                            const SizedBox(width: 16),
-                            const Icon(
-                              Icons.event_busy,
-                              size: 16,
-                              color: AppColors.christmasRed,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Expires ${_formatDate(invite.expiresAt!)}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.christmasRed,
-                                  ),
-                            ),
-                          ],
                         ],
                       ),
                       const SizedBox(height: 16),

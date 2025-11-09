@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:klaussified/data/models/user_model.dart';
 import 'package:klaussified/data/services/firestore_service.dart';
+import 'package:klaussified/data/repositories/group_repository.dart';
 
 class UserRepository {
   final FirestoreService _firestoreService;
@@ -53,6 +54,14 @@ class UserRepository {
     await _firestoreService.userDoc(user.uid).update(user.toFirestore());
   }
 
+  // Update username
+  Future<void> updateUsername(String userId, String username) async {
+    await _firestoreService.userDoc(userId).update({
+      'username': username.toLowerCase(),
+      'updatedAt': Timestamp.now(),
+    });
+  }
+
   // Update display name
   Future<void> updateDisplayName(String userId, String displayName) async {
     await _firestoreService.userDoc(userId).update({
@@ -67,6 +76,33 @@ class UserRepository {
       'photoURL': photoURL,
       'updatedAt': Timestamp.now(),
     });
+  }
+
+  // Update profile (username, displayName, photoURL)
+  Future<void> updateProfile({
+    required String userId,
+    String? username,
+    String? displayName,
+    String? photoURL,
+  }) async {
+    final Map<String, dynamic> updates = {
+      'updatedAt': Timestamp.now(),
+    };
+
+    if (username != null) updates['username'] = username.toLowerCase();
+    if (displayName != null) updates['displayName'] = displayName;
+    if (photoURL != null) updates['photoURL'] = photoURL;
+
+    await _firestoreService.userDoc(userId).update(updates);
+
+    // If photoURL was updated, also update it in all group memberships
+    if (photoURL != null) {
+      final groupRepo = GroupRepository();
+      await groupRepo.updateMemberPhotoURLInAllGroups(
+        userId: userId,
+        photoURL: photoURL,
+      );
+    }
   }
 
   // Delete user

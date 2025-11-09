@@ -28,7 +28,7 @@ class InviteRepository {
       inviteeUsername: inviteeUsername,
       status: AppConstants.inviteStatusPending,
       createdAt: DateTime.now(),
-      expiresAt: DateTime.now().add(const Duration(days: 7)), // Expires in 7 days
+      expiresAt: null, // Invitations never expire
     );
 
     final docRef = await _firestoreService.invitesCollection.add(invite.toFirestore());
@@ -44,7 +44,6 @@ class InviteRepository {
         .map((snapshot) {
           final invites = snapshot.docs
               .map((doc) => InviteModel.fromFirestore(doc))
-              .where((invite) => !invite.isExpired)
               .toList();
           // Sort in memory to avoid composite index requirement
           invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -61,7 +60,6 @@ class InviteRepository {
         .map((snapshot) {
           final invites = snapshot.docs
               .map((doc) => InviteModel.fromFirestore(doc))
-              .where((invite) => !invite.isExpired)
               .toList();
           // Sort in memory to avoid composite index requirement
           invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -121,6 +119,23 @@ class InviteRepository {
     final batch = _firestoreService.batch();
     for (var doc in snapshot.docs) {
       batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  // Auto-decline all pending invites when group starts
+  Future<void> declinePendingGroupInvites(String groupId) async {
+    final snapshot = await _firestoreService.invitesCollection
+        .where('groupId', isEqualTo: groupId)
+        .where('status', isEqualTo: AppConstants.inviteStatusPending)
+        .get();
+
+    final batch = _firestoreService.batch();
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {
+        'status': AppConstants.inviteStatusDeclined,
+        'respondedAt': FieldValue.serverTimestamp(),
+      });
     }
     await batch.commit();
   }

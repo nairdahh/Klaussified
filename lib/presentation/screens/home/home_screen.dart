@@ -55,23 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           right: 8,
                           top: 8,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            width: 10,
+                            height: 10,
                             decoration: const BoxDecoration(
                               color: AppColors.christmasGreen,
                               shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              inviteCount > 9 ? '9+' : '$inviteCount',
-                              style: const TextStyle(
-                                color: AppColors.snowWhite,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
@@ -184,30 +172,66 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: const BoxDecoration(
                     color: AppColors.christmasRed,
                   ),
-                  accountName: Text(
-                    user.displayName.isNotEmpty
-                        ? user.displayName
-                        : user.username,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  accountEmail: Text(user.email),
+                  accountName: user.displayName.isNotEmpty
+                      ? Text(
+                          user.displayName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        )
+                      : Text(
+                          user.username,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                  accountEmail: user.displayName.isNotEmpty
+                      ? Text(
+                          '@${user.username}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        )
+                      : null,
                   currentAccountPicture: CircleAvatar(
                     backgroundColor: AppColors.snowWhite,
-                    child: Text(
-                      (user.displayName.isNotEmpty
-                              ? user.displayName
-                              : user.username)
-                          .substring(0, 1)
-                          .toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.christmasRed,
-                      ),
-                    ),
+                    child: user.photoURL.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              user.photoURL,
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Text(
+                                  (user.displayName.isNotEmpty
+                                          ? user.displayName
+                                          : user.username)
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.christmasRed,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : Text(
+                            (user.displayName.isNotEmpty
+                                    ? user.displayName
+                                    : user.username)
+                                .substring(0, 1)
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.christmasRed,
+                            ),
+                          ),
                   ),
                 ),
                 ListTile(
@@ -215,11 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: const Text('Profile'),
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Profile feature coming soon!'),
-                      ),
-                    );
+                    context.push('/profile');
                   },
                 ),
                 ListTile(

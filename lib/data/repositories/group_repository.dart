@@ -20,6 +20,7 @@ class GroupRepository {
     String budget = '',
     required String ownerId,
     required String ownerName,
+    String ownerPhotoURL = '',
     DateTime? informationalDeadline,
   }) async {
     final groupRef = _firestoreService.groupsCollection.doc();
@@ -63,6 +64,7 @@ class GroupRepository {
       userId: ownerId,
       displayName: ownerName,
       username: ownerName,
+      photoURL: ownerPhotoURL,
     );
 
     return group;
@@ -70,17 +72,10 @@ class GroupRepository {
 
   // Get user's groups
   Stream<List<GroupModel>> streamUserGroups(String userId) {
-    print('🔍 [GroupRepository] Setting up stream for userId: $userId');
     return _firestoreService.groupsCollection
         .where('memberIds', arrayContains: userId)
         .snapshots()
         .map((snapshot) {
-          print('📊 [GroupRepository] Snapshot received: ${snapshot.docs.length} documents');
-          for (var doc in snapshot.docs) {
-            final data = doc.data() as Map<String, dynamic>?;
-            print('   📄 Doc ${doc.id}: memberIds=${data?['memberIds']}, status=${data?['status']}');
-          }
-
           final groups = snapshot.docs
               .map((doc) => GroupModel.fromFirestore(doc))
               .where((group) =>
@@ -88,11 +83,6 @@ class GroupRepository {
                   group.status == AppConstants.statusStarted ||
                   group.status == AppConstants.statusRevealed)
               .toList();
-
-          print('✅ [GroupRepository] Filtered to ${groups.length} active groups');
-          for (var group in groups) {
-            print('   🔹 ${group.name} (${group.id}): status=${group.status}, memberIds=${group.memberIds}');
-          }
 
           // Sort in memory instead of using orderBy
           groups.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -138,35 +128,26 @@ class GroupRepository {
     required String userId,
     required String displayName,
     required String username,
+    String photoURL = '',
   }) async {
-    print('👤 [GroupRepository] Adding member $userId to group $groupId');
-
     final memberRef = _firestoreService.groupMemberDoc(groupId, userId);
 
     final member = GroupMemberModel(
       userId: userId,
       displayName: displayName,
       username: username,
+      photoURL: photoURL,
       joinedAt: DateTime.now(),
       hasPicked: false,
     );
 
-    print('   💾 Writing member document...');
     await memberRef.set(member.toFirestore());
-    print('   ✅ Member document written');
 
     // Update group member count
-    print('   📝 Updating group document: adding userId to memberIds array...');
     await _firestoreService.groupDoc(groupId).update({
       'memberCount': FieldValue.increment(1),
       'memberIds': FieldValue.arrayUnion([userId]),
     });
-    print('   ✅ Group document updated with new memberIds');
-
-    // Verify the update
-    final groupDoc = await _firestoreService.groupDoc(groupId).get();
-    final data = groupDoc.data() as Map<String, dynamic>?;
-    print('   🔍 Verification: memberIds = ${data?['memberIds']}');
   }
 
   // Get group members
@@ -211,6 +192,10 @@ class GroupRepository {
       'status': AppConstants.statusStarted,
       'startedAt': Timestamp.now(),
     });
+
+    // Auto-decline all pending invites when group starts
+    final inviteRepo = InviteRepository();
+    await inviteRepo.declinePendingGroupInvites(groupId);
   }
 
   // Pick Secret Santa (simplified - just mark as picked)
@@ -273,6 +258,28 @@ class GroupRepository {
     // Delete all invites for this group
     final inviteRepo = InviteRepository();
     await inviteRepo.deleteGroupInvites(groupId);
+  }
+
+  // Update member photo URL across all groups
+  Future<void> updateMemberPhotoURLInAllGroups({
+    required String userId,
+    required String photoURL,
+  }) async {
+    // Get all groups where user is a member
+    final groupsSnapshot = await _firestoreService.groupsCollection
+        .where('memberIds', arrayContains: userId)
+        .get();
+
+    // Update photo URL in each group's member document
+    for (var groupDoc in groupsSnapshot.docs) {
+      final memberRef = _firestoreService.groupMemberDoc(groupDoc.id, userId);
+
+      // Check if member document exists before updating
+      final memberDoc = await memberRef.get();
+      if (memberDoc.exists) {
+        await memberRef.update({'photoURL': photoURL});
+      }
+    }
   }
 
   // Update group details (owner only)

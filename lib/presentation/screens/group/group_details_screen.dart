@@ -48,7 +48,7 @@ class GroupDetailsScreen extends StatelessWidget {
 
               return IconButton(
                 icon: const Icon(Icons.info_outline),
-                onPressed: () => _showGroupInfoDialog(context, group, isOwner),
+                onPressed: () => _showGroupInfoDialog(context, group, isOwner, currentUserId),
                 tooltip: 'Group Information',
               );
             },
@@ -88,8 +88,14 @@ class GroupDetailsScreen extends StatelessWidget {
               return Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
-                  child: Column(
-                    children: [
+                  child: StreamBuilder<List<InviteModel>>(
+                    stream: InviteRepository().streamGroupInvites(groupId),
+                    builder: (context, invitesSnapshot) {
+                      final invites = invitesSnapshot.data ?? [];
+
+                      return SingleChildScrollView(
+                        child: Column(
+                          children: [
                   // Group Info Card - Full Width
                   Container(
                     width: double.infinity,
@@ -148,25 +154,9 @@ class GroupDetailsScreen extends StatelessWidget {
                   ),
                   // Action Buttons
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     child: Column(
                       children: [
-                        // Invite Members Button (always visible for pending groups)
-                        if (group.isPending)
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _showInviteDialog(context, groupId),
-                              icon: const Icon(Icons.person_add),
-                              label: const Text('Invite Members'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.christmasGreen,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-
                         // Start Button (only for owner with 2+ members, disabled until 3+)
                         if (group.isPending && isOwner && actualMemberCount >= 2)
                           SizedBox(
@@ -185,27 +175,25 @@ class GroupDetailsScreen extends StatelessWidget {
                               ),
                             ),
                           ),
+                        if (group.isPending && isOwner && actualMemberCount >= 2)
+                          const SizedBox(height: 12),
 
-                        // Leave Group Button (only for non-owners in pending state)
-                        if (group.isPending && !isOwner)
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => _showLeaveGroupDialog(context, groupId, currentUserId, group.name),
-                              icon: const Icon(Icons.exit_to_app),
-                              label: const Text('Leave Group'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.error,
-                                side: const BorderSide(color: AppColors.error),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
+                        // Edit Profile Details Button (always visible)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => context.push('/group/$groupId/edit-details'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
+                            child: const Text('Edit My Profile Details'),
                           ),
+                        ),
                       ],
                     ),
                   ),
 
-                  // Pick/Reveal/Edit Buttons
+                  // Pick/Reveal Buttons
                   if (currentMember != null && group.isStarted && !currentMember.hasPicked)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -234,19 +222,6 @@ class GroupDetailsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => context.push('/group/$groupId/edit-details'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text('Edit My Profile Details'),
-                      ),
-                    ),
-                  ),
 
                   // Completion Message when all members have picked
                   if (group.isStarted &&
@@ -296,34 +271,44 @@ class GroupDetailsScreen extends StatelessWidget {
                       ),
                     ),
 
-                  Expanded(
-                    child: StreamBuilder<List<InviteModel>>(
-                      stream: InviteRepository().streamGroupInvites(groupId),
-                      builder: (context, invitesSnapshot) {
-                        final invites = invitesSnapshot.data ?? [];
+                  // Invite Members Button (just before Members section)
+                  if (group.isPending)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showInviteDialog(context, groupId),
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Invite Members'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.christmasGreen,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ),
 
-                        return ListView(
-                          children: [
-                            // Members Section Header
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.people, color: AppColors.christmasGreen),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Members (${members.length})',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.christmasGreen,
-                                        ),
-                                  ),
-                                ],
+                  // Members Section Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.people, color: AppColors.christmasGreen),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Members (${members.length})',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.christmasGreen,
                               ),
-                            ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                            // Members List
-                            ...members.map((member) {
+                  // Members List
+                  ...members.map((member) {
                               final displayName = member.displayName.isNotEmpty
                                   ? member.displayName
                                   : member.username;
@@ -336,13 +321,31 @@ class GroupDetailsScreen extends StatelessWidget {
                                 child: ListTile(
                                   leading: CircleAvatar(
                                     backgroundColor: AppColors.christmasGreen,
-                                    child: Text(
-                                      displayName[0].toUpperCase(),
-                                      style: const TextStyle(
-                                        color: AppColors.snowWhite,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    child: member.photoURL.isNotEmpty
+                                        ? ClipOval(
+                                            child: Image.network(
+                                              member.photoURL,
+                                              width: 40,
+                                              height: 40,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Text(
+                                                  displayName[0].toUpperCase(),
+                                                  style: const TextStyle(
+                                                    color: AppColors.snowWhite,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        : Text(
+                                            displayName[0].toUpperCase(),
+                                            style: const TextStyle(
+                                              color: AppColors.snowWhite,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                   ),
                                   title: Text(
                                     displayName,
@@ -355,9 +358,15 @@ class GroupDetailsScreen extends StatelessWidget {
                                           onPressed: () => _removeMember(context, groupId, member.userId, displayName),
                                           tooltip: 'Remove member',
                                         )
-                                      : (member.hasPicked
-                                          ? const Icon(Icons.check_circle, color: AppColors.christmasGreen)
-                                          : Icon(Icons.pending, color: AppColors.textSecondary.withValues(alpha: 0.5))),
+                                      : SizedBox(
+                                          width: 48,
+                                          height: 48,
+                                          child: Center(
+                                            child: member.hasPicked
+                                                ? const Icon(Icons.check_circle, color: AppColors.christmasGreen)
+                                                : Icon(Icons.pending, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                                          ),
+                                        ),
                                 ),
                               );
                             }),
@@ -411,9 +420,15 @@ class GroupDetailsScreen extends StatelessWidget {
                                             onPressed: () => _cancelInvite(context, invite.id, invite.inviteeUsername ?? 'this user'),
                                             tooltip: 'Cancel invitation',
                                           )
-                                        : const Icon(
-                                            Icons.hourglass_empty,
-                                            color: AppColors.christmasRed,
+                                        : const SizedBox(
+                                            width: 48,
+                                            height: 48,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.hourglass_empty,
+                                                color: AppColors.christmasRed,
+                                              ),
+                                            ),
                                           ),
                                   ),
                                 );
@@ -422,11 +437,9 @@ class GroupDetailsScreen extends StatelessWidget {
 
                             const SizedBox(height: 16),
                           ],
-                        );
-                      },
-                    ),
-                  ),
-                    ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               );
@@ -792,7 +805,7 @@ class GroupDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _showGroupInfoDialog(BuildContext context, dynamic group, bool isOwner) {
+  void _showGroupInfoDialog(BuildContext context, dynamic group, bool isOwner, String currentUserId) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -844,6 +857,18 @@ class GroupDetailsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Close'),
           ),
+          if (!isOwner && group.isPending) ...[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _showLeaveGroupDialog(context, group.id, currentUserId, group.name);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.error,
+              ),
+              child: const Text('Leave Group'),
+            ),
+          ],
           if (isOwner) ...[
             TextButton(
               onPressed: () {

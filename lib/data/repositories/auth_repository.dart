@@ -28,36 +28,26 @@ class AuthRepository {
     String? displayName,
   }) async {
     try {
-      print('🔵 AuthRepository: Starting registration for $username ($email)');
-
       // Check if username already exists
-      print('🔵 AuthRepository: Checking if username exists...');
       final usernameExists = await _userRepository.usernameExists(username);
       if (usernameExists) {
-        print('🔴 AuthRepository: Username already exists!');
         throw Exception('Username already exists');
       }
-      print('🟢 AuthRepository: Username available');
 
       // Register user
-      print('🔵 AuthRepository: Registering user with Firebase Auth...');
       final userCredential = await _authService.registerWithEmailPassword(
         email: email,
         password: password,
       );
-      print('🟢 AuthRepository: Firebase Auth registration successful');
 
       final user = userCredential.user!;
 
       // Update display name if provided
       if (displayName != null && displayName.isNotEmpty) {
-        print('🔵 AuthRepository: Updating display name...');
         await _authService.updateDisplayName(displayName);
-        print('🟢 AuthRepository: Display name updated');
       }
 
       // Create user document in Firestore
-      print('🔵 AuthRepository: Creating user document in Firestore...');
       final userModel = UserModel(
         uid: user.uid,
         email: email.toLowerCase(),
@@ -70,12 +60,9 @@ class AuthRepository {
       );
 
       await _userRepository.createUser(userModel);
-      print('🟢 AuthRepository: User document created successfully');
 
       return userModel;
-    } catch (e, stackTrace) {
-      print('🔴 AuthRepository ERROR: $e');
-      print('🔴 Stack trace: $stackTrace');
+    } catch (e) {
       rethrow;
     }
   }

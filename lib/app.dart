@@ -25,6 +25,10 @@ class KlaussifiedApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         routerConfig: AppRouter.router,
+        // Performance optimizations
+        showPerformanceOverlay: false,
+        checkerboardRasterCacheImages: false,
+        checkerboardOffscreenLayers: false,
       ),
     );
   }
