@@ -39,8 +39,10 @@ class _RevealScreenState extends State<RevealScreen> {
         backgroundColor: AppColors.christmasGreen,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/group/${widget.groupId}'),
-          tooltip: 'Back to Group',
+          onPressed: () {
+            final groupId = widget.groupId;
+            context.go('/group/$groupId');
+          },
         ),
       ),
       body: StreamBuilder<List<GroupMemberModel>>(
@@ -71,6 +73,7 @@ class _RevealScreenState extends State<RevealScreen> {
 
           // Find current user's member data
           final members = snapshot.data!;
+
           final currentMember = members.firstWhere(
             (m) => m.userId == user.uid,
             orElse: () => throw Exception('You are not a member of this group'),
@@ -104,7 +107,8 @@ class _RevealScreenState extends State<RevealScreen> {
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () {
-                        context.go('/group/${widget.groupId}/pick');
+                        final groupId = widget.groupId;
+                        context.go('/group/$groupId/pick');
                       },
                       child: const Text('Go to Pick'),
                     ),

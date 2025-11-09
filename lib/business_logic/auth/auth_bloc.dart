@@ -134,6 +134,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return 'Invalid email address';
     } else if (error.toString().contains('Username already exists')) {
       return 'Username already taken';
+    } else if (error.toString().contains('permission-denied') ||
+               error.toString().contains('PERMISSION_DENIED')) {
+      return 'Permission denied. Please check your account permissions.';
     } else {
       return 'An error occurred. Please try again.';
     }

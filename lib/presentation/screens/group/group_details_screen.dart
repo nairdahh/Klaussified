@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:klaussified/business_logic/auth/auth_bloc.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
 import 'package:klaussified/business_logic/group/group_bloc.dart';
@@ -12,14 +13,28 @@ import 'package:klaussified/data/repositories/invite_repository.dart';
 import 'package:klaussified/data/models/group_member_model.dart';
 import 'package:klaussified/data/models/invite_model.dart';
 
-class GroupDetailsScreen extends StatelessWidget {
+class GroupDetailsScreen extends StatefulWidget {
   final String groupId;
 
   const GroupDetailsScreen({super.key, required this.groupId});
 
   @override
+  State<GroupDetailsScreen> createState() => _GroupDetailsScreenState();
+}
+
+class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
+  late final GroupRepository _groupRepo;
+  late final InviteRepository _inviteRepo;
+
+  @override
+  void initState() {
+    super.initState();
+    _groupRepo = GroupRepository();
+    _inviteRepo = InviteRepository();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final groupRepo = GroupRepository();
     final authState = context.read<AuthBloc>().state;
     final currentUserId = (authState as AuthAuthenticated).user.uid;
 
@@ -40,7 +55,7 @@ class GroupDetailsScreen extends StatelessWidget {
         ),
         actions: [
           StreamBuilder(
-            stream: groupRepo.streamGroup(groupId),
+            stream: _groupRepo.streamGroup(widget.groupId),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const SizedBox.shrink();
               final group = snapshot.data!;
@@ -56,7 +71,7 @@ class GroupDetailsScreen extends StatelessWidget {
         ],
       ),
       body: StreamBuilder(
-        stream: groupRepo.streamGroup(groupId),
+        stream: _groupRepo.streamGroup(widget.groupId),
         builder: (context, groupSnapshot) {
           if (!groupSnapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -66,7 +81,7 @@ class GroupDetailsScreen extends StatelessWidget {
           final isOwner = group.ownerId == currentUserId;
 
           return StreamBuilder(
-            stream: groupRepo.streamGroupMembers(groupId),
+            stream: _groupRepo.streamGroupMembers(widget.groupId),
             builder: (context, membersSnapshot) {
               if (!membersSnapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -89,7 +104,7 @@ class GroupDetailsScreen extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: StreamBuilder<List<InviteModel>>(
-                    stream: InviteRepository().streamGroupInvites(groupId),
+                    stream: _inviteRepo.streamGroupInvites(widget.groupId),
                     builder: (context, invitesSnapshot) {
                       final invites = invitesSnapshot.data ?? [];
 
@@ -164,7 +179,7 @@ class GroupDetailsScreen extends StatelessWidget {
                             child: ElevatedButton.icon(
                               onPressed: actualMemberCount < 3
                                   ? null
-                                  : () => _showStartConfirmationDialog(context, groupId, actualMemberCount),
+                                  : () => _showStartConfirmationDialog(context, widget.groupId, actualMemberCount),
                               icon: const Icon(Icons.play_arrow),
                               label: Text(actualMemberCount < 3
                                   ? 'Need ${3 - actualMemberCount} more member(s) to start'
@@ -182,7 +197,7 @@ class GroupDetailsScreen extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => context.push('/group/$groupId/edit-details'),
+                            onPressed: () => context.push('/group/$widget.groupId/edit-details'),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
@@ -200,7 +215,10 @@ class GroupDetailsScreen extends StatelessWidget {
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () => context.push('/group/$groupId/pick'),
+                          onPressed: () {
+                            final groupId = widget.groupId;
+                            context.push('/group/$groupId/pick');
+                          },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -214,7 +232,10 @@ class GroupDetailsScreen extends StatelessWidget {
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () => context.push('/group/$groupId/reveal'),
+                          onPressed: () {
+                            final groupId = widget.groupId;
+                            context.push('/group/$groupId/reveal');
+                          },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -278,7 +299,7 @@ class GroupDetailsScreen extends StatelessWidget {
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => _showInviteDialog(context, groupId),
+                          onPressed: () => _showInviteDialog(context, widget.groupId),
                           icon: const Icon(Icons.person_add),
                           label: const Text('Invite Members'),
                           style: ElevatedButton.styleFrom(
@@ -323,12 +344,19 @@ class GroupDetailsScreen extends StatelessWidget {
                                     backgroundColor: AppColors.christmasGreen,
                                     child: member.photoURL.isNotEmpty
                                         ? ClipOval(
-                                            child: Image.network(
-                                              member.photoURL,
+                                            child: CachedNetworkImage(
+                                              imageUrl: member.photoURL,
                                               width: 40,
                                               height: 40,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
+                                              placeholder: (context, url) => const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: Center(
+                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                ),
+                                              ),
+                                              errorWidget: (context, url, error) {
                                                 return Text(
                                                   displayName[0].toUpperCase(),
                                                   style: const TextStyle(
@@ -355,7 +383,7 @@ class GroupDetailsScreen extends StatelessWidget {
                                   trailing: canRemove
                                       ? IconButton(
                                           icon: const Icon(Icons.person_remove, color: AppColors.error),
-                                          onPressed: () => _removeMember(context, groupId, member.userId, displayName),
+                                          onPressed: () => _removeMember(context, widget.groupId, member.userId, displayName),
                                           tooltip: 'Remove member',
                                         )
                                       : SizedBox(
@@ -504,7 +532,7 @@ class GroupDetailsScreen extends StatelessWidget {
               ),
               autofocus: true,
               textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _inviteMember(context, dialogContext, groupId, usernameController.text),
+              onSubmitted: (_) => _inviteMember(context, dialogContext, widget.groupId, usernameController.text),
             ),
           ],
         ),
@@ -514,7 +542,7 @@ class GroupDetailsScreen extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => _inviteMember(context, dialogContext, groupId, usernameController.text),
+            onPressed: () => _inviteMember(context, dialogContext, widget.groupId, usernameController.text),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.christmasGreen,
             ),

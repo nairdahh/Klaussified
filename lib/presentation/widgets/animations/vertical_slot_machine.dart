@@ -24,61 +24,134 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  late List<String> _shuffledNames;
+  late List<String> _displayList;
+  late double _scrollOffset;
   final Random _random = Random();
+
+  // Animation constants - precise calculations
+  static const double itemHeight = 100.0;
+  static const double viewportHeight = 400.0; // Container height
+  static const double visibleItems = viewportHeight / itemHeight; // 4 items visible
 
   @override
   void initState() {
     super.initState();
 
-    // Create a long list with repeated names for smooth animation
-    // The list needs to be long enough to cover the entire animation duration
-    final extendedList = <String>[];
+    // Calculate exactly how many items we need
+    // CRITICAL: Must work perfectly even with minimum 2 people
+    final durationSeconds = widget.duration.inMilliseconds / 1000.0;
 
-    // Repeat the shuffled names enough times to fill the animation
-    // We want at least 50 items to ensure smooth scrolling even with few members
-    final minItems = 50;
-    final shuffledBase = List<String>.from(widget.allNames)..shuffle(_random);
+    // Calculate items based on REASONABLE scrolling distance
+    // We want smooth, visible scrolling - not 32000px!
+    final groupSize = widget.allNames.length;
 
-    while (extendedList.length < minItems) {
-      extendedList.addAll(shuffledBase);
+    // Target: scroll through enough items to be dramatic but visible
+    // At 100px per item, we want ~50-100 items total for good effect
+    // This gives 5000-10000px scroll distance (reasonable for 3 sec animation)
+    final int targetScrollItems;
+    if (groupSize <= 2) {
+      targetScrollItems = 60;  // 60 items = 6000px scroll
+    } else if (groupSize <= 4) {
+      targetScrollItems = 50;  // 50 items = 5000px scroll
+    } else if (groupSize <= 6) {
+      targetScrollItems = 45;  // 45 items = 4500px scroll
+    } else if (groupSize <= 10) {
+      targetScrollItems = 40;  // 40 items = 4000px scroll
+    } else {
+      targetScrollItems = 35;  // 35 items = 3500px scroll
     }
 
-    // Add selected name at the end (this is where animation will stop)
-    extendedList.add(widget.selectedName);
-    _shuffledNames = extendedList;
+    final totalScrollItems = targetScrollItems;
+
+    // Build display list with padding to ensure viewport is always full
+    final paddingItems = visibleItems.ceil() + 2;
+    _displayList = _buildDisplayList(totalScrollItems, paddingItems);
+
+    // Calculate final scroll position - center the selected name in viewport
+    // Find the LAST occurrence of selected name (the one we added at the end)
+    int selectedIndex = -1;
+    for (int i = _displayList.length - 1; i >= 0; i--) {
+      if (_displayList[i] == widget.selectedName) {
+        selectedIndex = i;
+        break;
+      }
+    }
+
+    // Safety check
+    if (selectedIndex == -1) {
+      selectedIndex = _displayList.length - paddingItems - 1;
+    }
+
+    final centerOffset = (visibleItems / 2).floor();
+    _scrollOffset = (selectedIndex - centerOffset) * itemHeight;
+
+    // Ensure we don't scroll beyond the list boundaries
+    final maxScroll = (_displayList.length - visibleItems) * itemHeight;
+    _scrollOffset = _scrollOffset.clamp(0.0, maxScroll);
+
+    print('DEBUG ROULETTE: groupSize=$groupSize, targetItems=$targetScrollItems, totalItems=${_displayList.length}');
+    print('DEBUG ROULETTE: selectedIndex=$selectedIndex, scrollOffset=$_scrollOffset');
 
     _controller = AnimationController(
       vsync: this,
       duration: widget.duration,
     );
 
-    // Create a curved animation that starts fast and slows down
+    // Smooth acceleration and deceleration curve
     final curve = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeInOutQuart,
     );
 
     _animation = Tween<double>(
       begin: 0,
-      end: (_shuffledNames.length - 1).toDouble(),
+      end: _scrollOffset,
     ).animate(curve);
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // Wait a bit before calling onComplete
         Future.delayed(const Duration(milliseconds: 500), () {
-          widget.onComplete();
+          if (mounted) {
+            widget.onComplete();
+          }
         });
       }
     });
 
-    // Start animation after a short delay
+    // Start animation after brief delay
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         _controller.forward();
       }
     });
+  }
+
+  List<String> _buildDisplayList(int scrollItems, int padding) {
+    final result = <String>[];
+    final shuffledNames = List<String>.from(widget.allNames)..shuffle(_random);
+
+    // Add padding items at start (so viewport is full from the beginning)
+    for (int i = 0; i < padding; i++) {
+      result.add(shuffledNames[i % shuffledNames.length]);
+    }
+
+    // Add main scrolling items (shuffled repeatedly)
+    int addedItems = 0;
+    while (addedItems < scrollItems) {
+      final batch = List<String>.from(shuffledNames)..shuffle(_random);
+      result.addAll(batch);
+      addedItems += batch.length;
+    }
+
+    // Add selected name (where we stop)
+    result.add(widget.selectedName);
+
+    // Add padding items at end (so viewport stays full at the end)
+    for (int i = 0; i < padding; i++) {
+      result.add(shuffledNames[i % shuffledNames.length]);
+    }
+
+    return result;
   }
 
   @override
@@ -127,12 +200,12 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
                         minHeight: 0,
                         maxHeight: double.infinity,
                         child: Transform.translate(
-                          offset: Offset(0, -_animation.value * 100),
+                          offset: Offset(0, -_animation.value),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: _shuffledNames.map((name) {
+                            children: _displayList.map((name) {
                               return SizedBox(
-                                height: 100,
+                                height: itemHeight,
                                 child: Center(
                                   child: Text(
                                     name,

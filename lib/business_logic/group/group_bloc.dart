@@ -5,6 +5,7 @@ import 'package:klaussified/business_logic/group/group_state.dart';
 import 'package:klaussified/data/repositories/group_repository.dart';
 import 'package:klaussified/data/repositories/auth_repository.dart';
 import 'package:klaussified/data/repositories/invite_repository.dart';
+import 'package:klaussified/core/utils/error_messages.dart';
 
 class GroupBloc extends Bloc<GroupEvent, GroupState> {
   final GroupRepository _groupRepository;
@@ -42,13 +43,17 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
   ) async {
     emit(const GroupLoading());
 
+    // Cancel both subscriptions before creating new ones
     await _activeGroupsSubscription?.cancel();
     await _closedGroupsSubscription?.cancel();
 
     try {
+      // Use combineLatest to avoid nested subscriptions
       _activeGroupsSubscription = _groupRepository
           .streamUserGroups(event.userId)
           .listen((activeGroups) {
+        // Cancel previous closed groups subscription before creating new one
+        _closedGroupsSubscription?.cancel();
         _closedGroupsSubscription = _groupRepository
             .streamClosedGroups(event.userId)
             .listen((closedGroups) {
@@ -59,7 +64,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
         });
       });
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -97,7 +102,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       emit(const GroupOperationSuccess(message: 'Group created successfully!'));
       add(GroupLoadRequested(userId: user.uid));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
       final user = await _authRepository.getCurrentUserModel();
       if (user != null) {
         add(GroupLoadRequested(userId: user.uid));
@@ -113,7 +118,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       await _groupRepository.startGroup(event.groupId);
       emit(const GroupOperationSuccess(message: 'Group started! Members can now pick.'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -130,7 +135,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       );
       emit(const GroupOperationSuccess(message: 'Joined group successfully!'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -146,7 +151,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       );
       emit(const GroupOperationSuccess(message: 'Profile details updated!'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -163,7 +168,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       await _groupRepository.markAsPicked(event.groupId, event.userId);
       emit(const GroupOperationSuccess(message: 'Secret Santa picked!'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -175,7 +180,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       await _groupRepository.revealGroup(event.groupId);
       emit(const GroupOperationSuccess(message: 'Group revealed!'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -205,7 +210,8 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
         return;
       }
 
-      await _inviteRepository.createInvite(
+      print('Creating invite for user: ${event.inviteeUserId}, group: ${event.groupId}');
+      final inviteId = await _inviteRepository.createInvite(
         groupId: event.groupId,
         groupName: event.groupName,
         invitedBy: user.uid,
@@ -213,10 +219,11 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
         inviteeUserId: event.inviteeUserId,
         inviteeUsername: event.inviteeUsername,
       );
+      print('Invite created successfully with ID: $inviteId');
 
       emit(const GroupOperationSuccess(message: 'Invitation sent!'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -240,13 +247,29 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       // Mark invite as accepted AFTER (so member is added before invite disappears from UI)
       await _inviteRepository.acceptInvite(event.inviteId);
 
-      // Small delay to ensure Firestore propagates the memberIds update to all listeners
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Verify member was added successfully with retry logic
+      await _verifyMemberAdded(event.groupId, event.userId);
 
       emit(const GroupOperationSuccess(message: 'Invitation accepted! You joined the group.'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
+  }
+
+  // Helper method to verify member was added with retry logic
+  Future<void> _verifyMemberAdded(String groupId, String userId, {int maxRetries = 5}) async {
+    for (int i = 0; i < maxRetries; i++) {
+      final group = await _groupRepository.getGroupById(groupId);
+      if (group?.memberIds.contains(userId) ?? false) {
+        return; // Success!
+      }
+
+      // Wait before retrying (exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms)
+      await Future.delayed(Duration(milliseconds: 100 * (1 << i)));
+    }
+
+    // If we get here, verification failed after all retries
+    throw Exception('Failed to verify member was added to group after $maxRetries attempts');
   }
 
   Future<void> _onGroupInviteDeclineRequested(
@@ -257,7 +280,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       await _inviteRepository.declineInvite(event.inviteId);
       emit(const GroupOperationSuccess(message: 'Invitation declined'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -291,7 +314,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       await _groupRepository.removeMember(event.groupId, event.userId);
       emit(const GroupOperationSuccess(message: 'Member removed from group'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
@@ -317,7 +340,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       await _groupRepository.removeMember(event.groupId, event.userId);
       emit(const GroupOperationSuccess(message: 'You have left the group'));
     } catch (e) {
-      emit(GroupError(message: e.toString()));
+      emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 

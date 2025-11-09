@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:klaussified/business_logic/auth/auth_bloc.dart';
 import 'package:klaussified/business_logic/auth/auth_event.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
 import 'package:klaussified/core/theme/colors.dart';
 import 'package:klaussified/core/routes/route_names.dart';
+import 'package:klaussified/core/constants/app_version.dart';
 import 'package:klaussified/data/models/group_model.dart';
 import 'package:klaussified/data/repositories/invite_repository.dart';
 import 'package:klaussified/data/repositories/group_repository.dart';
@@ -18,6 +20,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late final GroupRepository _groupRepository;
+  late final InviteRepository _inviteRepository;
+
+  @override
+  void initState() {
+    super.initState();
+    _groupRepository = GroupRepository();
+    _inviteRepository = InviteRepository();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
@@ -31,16 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final user = authState.user;
-        // Create fresh repository instances on each build to ensure streams update
-        final groupRepository = GroupRepository();
-        final inviteRepository = InviteRepository();
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('Klaussified'),
             actions: [
               StreamBuilder<List>(
-                stream: inviteRepository.streamUserInvites(user.uid),
+                stream: _inviteRepository.streamUserInvites(user.uid),
                 builder: (context, snapshot) {
                   final inviteCount = snapshot.data?.length ?? 0;
                   return Stack(
@@ -70,10 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           body: StreamBuilder<List<GroupModel>>(
-            stream: groupRepository.streamUserGroups(user.uid),
+            stream: _groupRepository.streamUserGroups(user.uid),
             builder: (context, activeSnapshot) {
               return StreamBuilder<List<GroupModel>>(
-                stream: groupRepository.streamClosedGroups(user.uid),
+                stream: _groupRepository.streamClosedGroups(user.uid),
                 builder: (context, closedSnapshot) {
                   if (activeSnapshot.connectionState == ConnectionState.waiting ||
                       closedSnapshot.connectionState == ConnectionState.waiting) {
@@ -199,12 +208,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: AppColors.snowWhite,
                     child: user.photoURL.isNotEmpty
                         ? ClipOval(
-                            child: Image.network(
-                              user.photoURL,
+                            child: CachedNetworkImage(
+                              imageUrl: user.photoURL,
                               width: 72,
                               height: 72,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
+                              placeholder: (context, url) => const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Center(
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) {
                                 return Text(
                                   (user.displayName.isNotEmpty
                                           ? user.displayName
@@ -262,6 +278,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.pop(context);
                     context.read<AuthBloc>().add(const AuthLogoutRequested());
                   },
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    AppVersion.version,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),

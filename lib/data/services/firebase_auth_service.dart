@@ -91,10 +91,21 @@ class FirebaseAuthService {
 
   // Sign out
   Future<void> signOut() async {
-    await Future.wait([
-      _auth.signOut(),
-      _googleSignIn.signOut(),
-    ]);
+    // Check if user signed in with Google before signing out
+    final user = _auth.currentUser;
+    final isGoogleUser = user?.providerData
+        .any((info) => info.providerId == 'google.com') ?? false;
+
+    await _auth.signOut();
+
+    // Only sign out from Google if user used Google Sign-In
+    if (isGoogleUser) {
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        // Ignore Google sign-out errors (user may have revoked access)
+      }
+    }
   }
 
   // Send password reset email

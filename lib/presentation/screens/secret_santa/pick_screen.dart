@@ -1,15 +1,13 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:klaussified/business_logic/auth/auth_bloc.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
-import 'package:klaussified/business_logic/group/group_bloc.dart';
-import 'package:klaussified/business_logic/group/group_event.dart';
 import 'package:klaussified/core/theme/colors.dart';
 import 'package:klaussified/data/repositories/group_repository.dart';
 import 'package:klaussified/data/models/group_member_model.dart';
 import 'package:klaussified/presentation/widgets/animations/vertical_slot_machine.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class PickScreen extends StatefulWidget {
   final String groupId;
@@ -65,35 +63,32 @@ class _PickScreenState extends State<PickScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Get all members
-      final members = await _groupRepository.streamGroupMembers(widget.groupId).first;
+      // Call Cloud Function to assign Secret Santa
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('assignSecretSanta');
 
-      // Get list of already assigned user IDs
-      final alreadyAssigned = members
-          .where((m) => m.assignedToUserId != null)
-          .map((m) => m.assignedToUserId!)
-          .toSet();
+      final result = await callable.call<Map<String, dynamic>>({
+        'groupId': widget.groupId,
+        'userId': user.uid,
+      });
 
-      // Available members are those who:
-      // 1. Are not the current user
-      // 2. Haven't been assigned to anyone yet
-      final available = members
-          .where((m) => m.userId != user.uid && !alreadyAssigned.contains(m.userId))
-          .toList();
-
-      if (available.isEmpty) {
-        throw Exception('No available members to pick!');
-      }
-
-      // Random selection
-      final random = Random();
-      final selected = available[random.nextInt(available.length)];
+      final assignedToUserId = result.data['assignedToUserId'] as String;
 
       if (mounted) {
         setState(() {
-          _selectedUserId = selected.userId;
+          _selectedUserId = assignedToUserId;
           _showAnimation = true;
         });
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.message ?? e.code}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -109,34 +104,24 @@ class _PickScreenState extends State<PickScreen> {
   }
 
   void _onAnimationComplete() async {
-    final authBloc = context.read<AuthBloc>();
-    if (authBloc.state is! AuthAuthenticated) return;
-
-    final user = (authBloc.state as AuthAuthenticated).user;
-
     if (_selectedUserId == null) return;
 
     try {
-      // Save the pick
-      context.read<GroupBloc>().add(
-            GroupPickRequested(
-              groupId: widget.groupId,
-              userId: user.uid,
-              assignedUserId: _selectedUserId!,
-            ),
-          );
-
-      // Wait a bit then navigate to reveal
+      // Assignment already done by Cloud Function, navigate to reveal
+      // Wait a bit for animation to complete
       await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
-        context.go('/group/${widget.groupId}/reveal');
+        // Use go() to replace the current route (pick screen) with reveal screen
+        // This way, back from reveal goes directly to group details, not to pick screen
+        final groupId = widget.groupId;
+        context.go('/group/$groupId/reveal');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving pick: $e'),
+            content: Text('Error: $e'),
             backgroundColor: AppColors.error,
           ),
         );

@@ -92,6 +92,7 @@ class InvitationsScreen extends StatelessWidget {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: invites.length,
+            itemExtent: 180.0, // Approximate height of invitation card for better scrolling performance
             itemBuilder: (context, index) {
               final invite = invites[index];
               return Card(
@@ -100,6 +101,7 @@ class InvitationsScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -120,6 +122,7 @@ class InvitationsScreen extends StatelessWidget {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   invite.groupName,
@@ -140,7 +143,7 @@ class InvitationsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           const Icon(
@@ -157,7 +160,7 @@ class InvitationsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
