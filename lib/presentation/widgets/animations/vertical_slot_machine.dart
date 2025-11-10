@@ -67,7 +67,7 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
     final paddingItems = visibleItems.ceil() + 2;
     _displayList = _buildDisplayList(totalScrollItems, paddingItems);
 
-    // Calculate final scroll position - center the selected name in viewport
+    // Calculate final scroll position - center the selected name in the 400px container
     // Find the LAST occurrence of selected name (the one we added at the end)
     int selectedIndex = -1;
     for (int i = _displayList.length - 1; i >= 0; i--) {
@@ -82,11 +82,12 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
       selectedIndex = _displayList.length - paddingItems - 1;
     }
 
-    final centerOffset = (visibleItems / 2).floor();
-    _scrollOffset = (selectedIndex - centerOffset) * itemHeight;
+    // Center the selected item in the middle of the 400px container (at 200px from top)
+    // scrollOffset = (selected item position) - (middle of container) + (half item height to center it)
+    _scrollOffset = (selectedIndex * itemHeight) - (viewportHeight / 2) + (itemHeight / 2);
 
     // Ensure we don't scroll beyond the list boundaries
-    final maxScroll = (_displayList.length - visibleItems) * itemHeight;
+    final maxScroll = (_displayList.length * itemHeight) - viewportHeight;
     _scrollOffset = _scrollOffset.clamp(0.0, maxScroll);
 
     print('DEBUG ROULETTE: groupSize=$groupSize, targetItems=$targetScrollItems, totalItems=${_displayList.length}');
@@ -180,10 +181,45 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
         borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
-            // Slot machine viewport
+            // Scrolling names - use full container height
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, -_animation.value),
+                  child: Column(
+                    children: _displayList.map((name) {
+                      return SizedBox(
+                        height: itemHeight,
+                        child: Center(
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.snowWhite,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black45,
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
+
+            // Selection indicator box - centered
             Center(
               child: Container(
-                height: 120,
+                height: 100,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: AppColors.christmasGreen,
@@ -191,45 +227,6 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: AppColors.snowWhite.withValues(alpha: 0.1),
-                ),
-                child: AnimatedBuilder(
-                  animation: _animation,
-                  builder: (context, child) {
-                    return ClipRect(
-                      child: OverflowBox(
-                        minHeight: 0,
-                        maxHeight: double.infinity,
-                        child: Transform.translate(
-                          offset: Offset(0, -_animation.value),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: _displayList.map((name) {
-                              return SizedBox(
-                                height: itemHeight,
-                                child: Center(
-                                  child: Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.snowWhite,
-                                      shadows: [
-                                        Shadow(
-                                          color: Colors.black45,
-                                          blurRadius: 4,
-                                        ),
-                                      ],
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
             ),

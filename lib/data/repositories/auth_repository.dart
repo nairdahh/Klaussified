@@ -28,19 +28,22 @@ class AuthRepository {
     String? displayName,
   }) async {
     try {
-      // Check if username already exists
-      final usernameExists = await _userRepository.usernameExists(username);
-      if (usernameExists) {
-        throw Exception('Username already exists');
-      }
-
-      // Register user
+      // Register user in Firebase Auth FIRST
+      // This creates the authentication and gives us an authenticated user
       final userCredential = await _authService.registerWithEmailPassword(
         email: email,
         password: password,
       );
 
       final user = userCredential.user!;
+
+      // NOW check if username already exists (we're authenticated now!)
+      final usernameExists = await _userRepository.usernameExists(username);
+      if (usernameExists) {
+        // Delete the auth user we just created since username is taken
+        await user.delete();
+        throw Exception('Username already exists');
+      }
 
       // Update display name if provided
       if (displayName != null && displayName.isNotEmpty) {
