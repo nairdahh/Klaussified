@@ -142,7 +142,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Check if username is being changed and if it's available
       final newUsername = _usernameController.text.trim().toLowerCase();
       if (newUsername != user.username) {
-        final usernameExists = await _userRepository.usernameExists(newUsername);
+        final usernameExists =
+            await _userRepository.usernameExists(newUsername);
         if (usernameExists) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -213,160 +214,171 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profile'),
         backgroundColor: AppColors.christmasGreen,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Avatar Section
-              Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 64,
-                      backgroundColor: AppColors.christmasGreen.withValues(alpha: 0.2),
-                      backgroundImage: _selectedImageBytes != null
-                          ? MemoryImage(_selectedImageBytes!)
-                          : (_currentPhotoURL.isNotEmpty
-                              ? NetworkImage(_currentPhotoURL)
-                              : null) as ImageProvider?,
-                      child: _selectedImageBytes == null && _currentPhotoURL.isEmpty
-                          ? const Icon(
-                              Icons.person,
-                              size: 64,
-                              color: AppColors.christmasGreen,
-                            )
-                          : null,
-                    ),
-                    if (_isUploadingImage)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            shape: BoxShape.circle,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Avatar Section
+                  Center(
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 64,
+                          backgroundColor:
+                              AppColors.christmasGreen.withValues(alpha: 0.2),
+                          backgroundImage: _selectedImageBytes != null
+                              ? MemoryImage(_selectedImageBytes!)
+                              : (_currentPhotoURL.isNotEmpty
+                                  ? NetworkImage(_currentPhotoURL)
+                                  : null) as ImageProvider?,
+                          child: _selectedImageBytes == null &&
+                                  _currentPhotoURL.isEmpty
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 64,
+                                  color: AppColors.christmasGreen,
+                                )
+                              : null,
+                        ),
+                        if (_isUploadingImage)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.snowWhite,
+                                ),
+                              ),
+                            ),
                           ),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.snowWhite,
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            backgroundColor: AppColors.christmasGreen,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.camera_alt,
+                                color: AppColors.snowWhite,
+                              ),
+                              onPressed: _isLoading || _isUploadingImage
+                                  ? null
+                                  : _pickImage,
                             ),
                           ),
                         ),
-                      ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        backgroundColor: AppColors.christmasGreen,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.camera_alt,
-                            color: AppColors.snowWhite,
-                          ),
-                          onPressed: _isLoading || _isUploadingImage
-                              ? null
-                              : _pickImage,
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  'Tap camera to change avatar',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Email (read-only)
-              TextFormField(
-                initialValue: user.email,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                enabled: false,
-              ),
-              const SizedBox(height: 16),
-
-              // Username Field
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  prefixIcon: Icon(Icons.person),
-                  helperText: 'Lowercase letters, numbers, and underscores only',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a username';
-                  }
-                  if (value.length < AppConstants.minUsernameLength) {
-                    return 'Username must be at least ${AppConstants.minUsernameLength} characters';
-                  }
-                  if (value.length > AppConstants.maxUsernameLength) {
-                    return 'Username must be less than ${AppConstants.maxUsernameLength} characters';
-                  }
-                  if (!AppConstants.usernameRegex.hasMatch(value)) {
-                    return 'Username can only contain letters, numbers, and underscores';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading && !_isUploadingImage,
-                onChanged: (value) {
-                  // Auto-convert to lowercase
-                  final lowercase = value.toLowerCase();
-                  if (value != lowercase) {
-                    _usernameController.value = _usernameController.value.copyWith(
-                      text: lowercase,
-                      selection: TextSelection.collapsed(offset: lowercase.length),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Real Name Field
-              TextFormField(
-                controller: _displayNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Real Name (Optional)',
-                  prefixIcon: Icon(Icons.badge),
-                ),
-                enabled: !_isLoading && !_isUploadingImage,
-              ),
-              const SizedBox(height: 32),
-
-              // Save Button
-              ElevatedButton(
-                onPressed: _isLoading || _isUploadingImage ? null : _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.christmasGreen,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: _isLoading || _isUploadingImage
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.snowWhite,
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'Tap camera to change avatar',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
                           ),
-                        ),
-                      )
-                    : const Text(
-                        'Save Changes',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Email (read-only)
+                  TextFormField(
+                    initialValue: user.email,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.email),
+                    ),
+                    enabled: false,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Username Field
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Username',
+                      prefixIcon: Icon(Icons.person),
+                      helperText:
+                          'Lowercase letters, numbers, and underscores only',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a username';
+                      }
+                      if (value.length < AppConstants.minUsernameLength) {
+                        return 'Username must be at least ${AppConstants.minUsernameLength} characters';
+                      }
+                      if (value.length > AppConstants.maxUsernameLength) {
+                        return 'Username must be less than ${AppConstants.maxUsernameLength} characters';
+                      }
+                      if (!AppConstants.usernameRegex.hasMatch(value)) {
+                        return 'Username can only contain letters, numbers, and underscores';
+                      }
+                      return null;
+                    },
+                    enabled: !_isLoading && !_isUploadingImage,
+                    onChanged: (value) {
+                      // Auto-convert to lowercase
+                      final lowercase = value.toLowerCase();
+                      if (value != lowercase) {
+                        _usernameController.value =
+                            _usernameController.value.copyWith(
+                          text: lowercase,
+                          selection:
+                              TextSelection.collapsed(offset: lowercase.length),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Real Name Field
+                  TextFormField(
+                    controller: _displayNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Real Name (Optional)',
+                      prefixIcon: Icon(Icons.badge),
+                    ),
+                    enabled: !_isLoading && !_isUploadingImage,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Save Button
+                  ElevatedButton(
+                    onPressed:
+                        _isLoading || _isUploadingImage ? null : _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.christmasGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: _isLoading || _isUploadingImage
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.snowWhite,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Save Changes',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

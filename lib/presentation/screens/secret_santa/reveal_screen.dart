@@ -37,13 +37,6 @@ class _RevealScreenState extends State<RevealScreen> {
       appBar: AppBar(
         title: const Text('Your Secret Santa'),
         backgroundColor: AppColors.christmasGreen,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            final groupId = widget.groupId;
-            context.go('/group/$groupId');
-          },
-        ),
       ),
       body: StreamBuilder<List<GroupMemberModel>>(
         stream: _groupRepository.streamGroupMembers(widget.groupId),
@@ -57,7 +50,8 @@ class _RevealScreenState extends State<RevealScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                  const Icon(Icons.error_outline,
+                      size: 64, color: AppColors.error),
                   const SizedBox(height: 16),
                   Text('Error: ${snapshot.error}'),
                 ],
@@ -108,7 +102,7 @@ class _RevealScreenState extends State<RevealScreen> {
                     ElevatedButton(
                       onPressed: () {
                         final groupId = widget.groupId;
-                        context.go('/group/$groupId/pick');
+                        context.push('/group/$groupId/pick');
                       },
                       child: const Text('Go to Pick'),
                     ),
@@ -124,144 +118,149 @@ class _RevealScreenState extends State<RevealScreen> {
             orElse: () => throw Exception('Assigned member not found'),
           );
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Celebration header
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.christmasRed,
-                        AppColors.christmasGreen,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.celebration,
-                        size: 64,
-                        color: AppColors.snowWhite,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'You\'re buying a gift for:',
-                        style: TextStyle(
-                          color: AppColors.snowWhite,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Celebration header
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.christmasRed,
+                            Color(0xFFFF6B6B), // Light red
+                          ],
                         ),
-                        textAlign: TextAlign.center,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        assignedMember.displayName.isNotEmpty
-                            ? assignedMember.displayName
-                            : assignedMember.username,
-                        style: const TextStyle(
-                          color: AppColors.snowWhite,
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Profile Details Card
-                if (assignedMember.profileDetails.isComplete) ...[
-                  const Text(
-                    'Gift Hints:',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.christmasGreen,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Real Name
-                  _buildDetailCard(
-                    icon: Icons.person,
-                    title: 'Name',
-                    content: assignedMember.profileDetails.realName,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Hobbies
-                  _buildDetailCard(
-                    icon: Icons.favorite,
-                    title: 'Hobbies & Interests',
-                    content: assignedMember.profileDetails.hobbies,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Wishes
-                  _buildDetailCard(
-                    icon: Icons.card_giftcard,
-                    title: 'Gift Wishes & Hints',
-                    content: assignedMember.profileDetails.wishes,
-                  ),
-                ] else ...[
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
                           const Icon(
-                            Icons.info_outline,
-                            size: 48,
-                            color: AppColors.textSecondary,
+                            Icons.celebration,
+                            size: 64,
+                            color: AppColors.snowWhite,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'You\'re buying a gift for:',
+                            style: TextStyle(
+                              color: AppColors.snowWhite,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            '${assignedMember.displayName.isNotEmpty ? assignedMember.displayName : assignedMember.username} hasn\'t filled out their profile details yet.',
+                            assignedMember.displayName.isNotEmpty
+                                ? assignedMember.displayName
+                                : assignedMember.username,
                             style: const TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
+                              color: AppColors.snowWhite,
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                // Reminder card
-                Card(
-                  color: AppColors.christmasRed.withValues(alpha: 0.1),
-                  child: const Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.lock,
-                          color: AppColors.christmasRed,
+                    // Profile Details Card
+                    if (assignedMember.profileDetails.isComplete) ...[
+                      const Text(
+                        'Gift Hints:',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.christmasGreen,
                         ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            'Remember: Keep this a secret! Don\'t tell anyone who you\'re buying for.',
-                            style: TextStyle(
-                              color: AppColors.christmasRed,
-                              fontWeight: FontWeight.w500,
-                            ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Real Name
+                      _buildDetailCard(
+                        icon: Icons.person,
+                        title: 'Name',
+                        content: assignedMember.profileDetails.realName,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Hobbies
+                      _buildDetailCard(
+                        icon: Icons.favorite,
+                        title: 'Hobbies & Interests',
+                        content: assignedMember.profileDetails.hobbies,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Wishes
+                      _buildDetailCard(
+                        icon: Icons.card_giftcard,
+                        title: 'Gift Wishes & Hints',
+                        content: assignedMember.profileDetails.wishes,
+                      ),
+                    ] else ...[
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                size: 48,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '${assignedMember.displayName.isNotEmpty ? assignedMember.displayName : assignedMember.username} hasn\'t filled out their profile details yet.',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+
+                    // Reminder card
+                    Card(
+                      color: AppColors.christmasRed.withValues(alpha: 0.1),
+                      child: const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.lock,
+                              color: AppColors.christmasRed,
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'Remember: Keep this a secret! Don\'t tell anyone who you\'re buying for.',
+                                style: TextStyle(
+                                  color: AppColors.christmasRed,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },

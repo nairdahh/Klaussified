@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:klaussified/core/constants/constants.dart';
 import 'package:klaussified/data/models/group_model.dart';
 import 'package:klaussified/data/models/group_member_model.dart';
@@ -27,12 +28,12 @@ class GroupRepository {
 
     // Calculate reveal date: minimum December 25th of the year group is created
     final now = DateTime.now();
-    final christmasThisYear = DateTime(now.year, 12, 25);
+    final revealDateThisYear = DateTime(now.year, 12, 28);
 
-    // If created after Dec 25, use next year's Christmas
-    final minRevealDate = now.isAfter(christmasThisYear)
-        ? DateTime(now.year + 1, 12, 25)
-        : christmasThisYear;
+    // If created after Dec 28, use next year's reveal date
+    final minRevealDate = now.isAfter(revealDateThisYear)
+        ? DateTime(now.year + 1, 12, 28)
+        : revealDateThisYear;
 
     // Use the later date between minRevealDate and informationalDeadline (if provided)
     final calculatedRevealDate = informationalDeadline != null && informationalDeadline.isAfter(minRevealDate)
@@ -175,6 +176,13 @@ class GroupRepository {
     });
   }
 
+  // Get a single member document
+  Future<GroupMemberModel?> getMemberDoc(String groupId, String userId) async {
+    final doc = await _firestoreService.groupMemberDoc(groupId, userId).get();
+    if (!doc.exists) return null;
+    return GroupMemberModel.fromFirestore(doc);
+  }
+
   // Update member profile details
   Future<void> updateMemberProfileDetails({
     required String groupId,
@@ -186,12 +194,21 @@ class GroupRepository {
     });
   }
 
-  // Start group (simple version without Cloud Functions)
+  // Start group - Generate all Secret Santa assignments
   Future<void> startGroup(String groupId) async {
-    await _firestoreService.groupDoc(groupId).update({
-      'status': AppConstants.statusStarted,
-      'startedAt': Timestamp.now(),
+    // Call Cloud Function to generate ALL assignments atomically
+    final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+    final callable = functions.httpsCallable('generateAllAssignments');
+
+    await callable.call<Map<String, dynamic>>({
+      'groupId': groupId,
     });
+
+    // Cloud Function handles:
+    // - Updating group status to 'started'
+    // - Setting startedAt timestamp
+    // - Generating all assignments atomically
+    // - Creating assignment log for debugging
 
     // Auto-decline all pending invites when group starts
     final inviteRepo = InviteRepository();
@@ -282,6 +299,35 @@ class GroupRepository {
     }
   }
 
+  // Update member profile fields (username, displayName) in all groups
+  Future<void> updateMemberProfileInAllGroups({
+    required String userId,
+    String? username,
+    String? displayName,
+  }) async {
+    // Get all groups where user is a member
+    final groupsSnapshot = await _firestoreService.groupsCollection
+        .where('memberIds', arrayContains: userId)
+        .get();
+
+    // Update profile fields in each group's member document
+    for (var groupDoc in groupsSnapshot.docs) {
+      final memberRef = _firestoreService.groupMemberDoc(groupDoc.id, userId);
+
+      // Check if member document exists before updating
+      final memberDoc = await memberRef.get();
+      if (memberDoc.exists) {
+        final Map<String, dynamic> updates = {};
+        if (username != null) updates['username'] = username;
+        if (displayName != null) updates['displayName'] = displayName;
+
+        if (updates.isNotEmpty) {
+          await memberRef.update(updates);
+        }
+      }
+    }
+  }
+
   // Update group details (owner only)
   Future<void> updateGroupDetails({
     required String groupId,
@@ -293,12 +339,12 @@ class GroupRepository {
   }) async {
     // Recalculate reveal date based on new deadline
     final now = DateTime.now();
-    final christmasThisYear = DateTime(now.year, 12, 25);
+    final revealDateThisYear = DateTime(now.year, 12, 28);
 
-    // If created after Dec 25, use next year's Christmas
-    final minRevealDate = now.isAfter(christmasThisYear)
-        ? DateTime(now.year + 1, 12, 25)
-        : christmasThisYear;
+    // If created after Dec 28, use next year's reveal date
+    final minRevealDate = now.isAfter(revealDateThisYear)
+        ? DateTime(now.year + 1, 12, 28)
+        : revealDateThisYear;
 
     // Use the later date between minRevealDate and informationalDeadline (if provided)
     final calculatedRevealDate = informationalDeadline != null && informationalDeadline.isAfter(minRevealDate)

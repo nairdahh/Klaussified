@@ -36,7 +36,8 @@ class _PickScreenState extends State<PickScreen> {
 
   Future<void> _loadMembers() async {
     try {
-      final members = await _groupRepository.streamGroupMembers(widget.groupId).first;
+      final members =
+          await _groupRepository.streamGroupMembers(widget.groupId).first;
       if (mounted) {
         setState(() {
           _allMembers = members;
@@ -63,9 +64,9 @@ class _PickScreenState extends State<PickScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Call Cloud Function to assign Secret Santa
+      // Call Cloud Function to reveal pre-assigned Secret Santa
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
-      final callable = functions.httpsCallable('assignSecretSanta');
+      final callable = functions.httpsCallable('revealAssignment');
 
       final result = await callable.call<Map<String, dynamic>>({
         'groupId': widget.groupId,
@@ -112,10 +113,10 @@ class _PickScreenState extends State<PickScreen> {
       await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
-        // Use go() to replace the current route (pick screen) with reveal screen
+        // Replace the current route (pick screen) with reveal screen
         // This way, back from reveal goes directly to group details, not to pick screen
         final groupId = widget.groupId;
-        context.go('/group/$groupId/reveal');
+        context.pushReplacement('/group/$groupId/reveal');
       }
     } catch (e) {
       if (mounted) {
@@ -132,8 +133,11 @@ class _PickScreenState extends State<PickScreen> {
   @override
   Widget build(BuildContext context) {
     if (_showAnimation && _allMembers != null && _selectedUserId != null) {
-      final selectedMember = _allMembers!.firstWhere((m) => m.userId == _selectedUserId);
-      final allNames = _allMembers!.map((m) => m.displayName.isNotEmpty ? m.displayName : m.username).toList();
+      final selectedMember =
+          _allMembers!.firstWhere((m) => m.userId == _selectedUserId);
+      final allNames = _allMembers!
+          .map((m) => m.displayName.isNotEmpty ? m.displayName : m.username)
+          .toList();
 
       return Scaffold(
         backgroundColor: AppColors.christmasRed,
@@ -162,79 +166,82 @@ class _PickScreenState extends State<PickScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Gift icon
-              Icon(
-                Icons.card_giftcard,
-                size: 120,
-                color: AppColors.christmasRed.withValues(alpha: 0.8),
-              ),
-              const SizedBox(height: 32),
-
-              // Title
-              Text(
-                'Ready to discover\nyour Secret Santa?',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.christmasRed,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Description
-              const Text(
-                'Click the button below to randomly draw who you\'ll be buying a gift for!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Gift icon
+                Icon(
+                  Icons.card_giftcard,
+                  size: 120,
+                  color: AppColors.christmasRed.withValues(alpha: 0.8),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
+                const SizedBox(height: 32),
 
-              // Pick button
-              SizedBox(
-                width: 200,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _startPicking,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.christmasGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                // Title
+                Text(
+                  'Ready to discover\nyour Secret Santa?',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.christmasRed,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+
+                // Description
+                const Text(
+                  'Click the button below to randomly draw who you\'ll be buying a gift for!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.snowWhite,
-                            ),
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.shuffle, size: 24),
-                            SizedBox(width: 8),
-                            Text(
-                              'Draw Now!',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 48),
+
+                // Pick button
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _startPicking,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.christmasGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.snowWhite,
                               ),
                             ),
-                          ],
-                        ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.shuffle, size: 24),
+                              SizedBox(width: 8),
+                              Text(
+                                'Draw Now!',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

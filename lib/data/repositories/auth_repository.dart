@@ -70,13 +70,25 @@ class AuthRepository {
     }
   }
 
-  // Sign in with email and password
+  // Sign in with email and password (also supports username)
   Future<UserModel> signInWithEmailPassword({
     required String email,
     required String password,
   }) async {
+    // Check if input is email or username
+    String actualEmail = email;
+
+    // If input doesn't contain '@', treat it as username and look up email
+    if (!email.contains('@')) {
+      final userByUsername = await _userRepository.getUserByUsername(email);
+      if (userByUsername == null) {
+        throw Exception('username-not-found');
+      }
+      actualEmail = userByUsername.email;
+    } else {}
+
     final userCredential = await _authService.signInWithEmailPassword(
-      email: email,
+      email: actualEmail,
       password: password,
     );
 

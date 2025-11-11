@@ -42,17 +42,6 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       appBar: AppBar(
         title: const Text('Group Details'),
         backgroundColor: AppColors.christmasGreen,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-          tooltip: 'Back',
-        ),
         actions: [
           StreamBuilder(
             stream: _groupRepo.streamGroup(widget.groupId),
@@ -197,7 +186,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => context.push('/group/$widget.groupId/edit-details'),
+                            onPressed: () {
+                              // IMPORTANT: Create local variable to avoid Flutter Web string interpolation bug
+                              final groupId = widget.groupId;
+                              context.push('/group/$groupId/edit-details');
+                            },
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
@@ -277,9 +270,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                group.revealDate != null
-                                    ? 'The creator will be able to archive the group after ${group.revealDate!.day}/${group.revealDate!.month}/${group.revealDate!.year} and all assignments will be revealed. Until then, Merry Christmas and we hope you enjoy your gifts!'
-                                    : 'The group is now complete! All members have their assignments. The creator will be able to archive the group soon. Merry Christmas and we hope you enjoy your gifts!',
+                                'The group is now complete! The creator will be able to archive the group after ${group.revealDate!.day}/${group.revealDate!.month}/${group.revealDate!.year} and all assignments will be revealed. Until then, Merry Christmas and we hope you enjoy your gifts!',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: AppColors.textPrimary,
                                       height: 1.5,

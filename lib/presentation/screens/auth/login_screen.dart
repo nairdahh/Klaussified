@@ -110,20 +110,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 32),
 
-                            // Email Field
+                            // Email or Username Field
                             TextFormField(
                               controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
+                              keyboardType: TextInputType.text,
                               decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email),
+                                labelText: 'Email or Username',
+                                hintText: 'Enter your email or username',
+                                prefixIcon: Icon(Icons.person),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
+                                  return 'Please enter your email or username';
                                 }
                                 return null;
                               },

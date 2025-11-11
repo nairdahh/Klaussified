@@ -122,20 +122,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   String _getErrorMessage(dynamic error) {
-    if (error.toString().contains('user-not-found')) {
+    final errorString = error.toString();
+
+    if (errorString.contains('username-not-found')) {
+      return 'No user found with this username';
+    } else if (errorString.contains('user-not-found')) {
       return 'No user found with this email';
-    } else if (error.toString().contains('wrong-password')) {
+    } else if (errorString.contains('wrong-password')) {
       return 'Wrong password';
-    } else if (error.toString().contains('email-already-in-use')) {
+    } else if (errorString.contains('email-already-in-use')) {
       return 'Email already in use';
-    } else if (error.toString().contains('weak-password')) {
+    } else if (errorString.contains('weak-password')) {
       return 'Password is too weak';
-    } else if (error.toString().contains('invalid-email')) {
+    } else if (errorString.contains('invalid-email')) {
       return 'Invalid email address';
-    } else if (error.toString().contains('Username already exists')) {
+    } else if (errorString.contains('Username already exists')) {
       return 'Username already taken';
-    } else if (error.toString().contains('permission-denied') ||
-               error.toString().contains('PERMISSION_DENIED')) {
+    } else if (errorString.contains('permission-denied') ||
+               errorString.contains('PERMISSION_DENIED')) {
       return 'Permission denied. Please check your account permissions.';
     } else {
       return 'An error occurred. Please try again.';

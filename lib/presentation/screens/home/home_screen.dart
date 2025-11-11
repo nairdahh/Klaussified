@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:klaussified/business_logic/auth/auth_bloc.dart';
 import 'package:klaussified/business_logic/auth/auth_event.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
@@ -84,8 +85,10 @@ class _HomeScreenState extends State<HomeScreen> {
               return StreamBuilder<List<GroupModel>>(
                 stream: _groupRepository.streamClosedGroups(user.uid),
                 builder: (context, closedSnapshot) {
-                  if (activeSnapshot.connectionState == ConnectionState.waiting ||
-                      closedSnapshot.connectionState == ConnectionState.waiting) {
+                  if (activeSnapshot.connectionState ==
+                          ConnectionState.waiting ||
+                      closedSnapshot.connectionState ==
+                          ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
@@ -94,9 +97,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                          const Icon(Icons.error_outline,
+                              size: 64, color: AppColors.error),
                           const SizedBox(height: 16),
-                          Text('Error loading groups: ${activeSnapshot.error ?? closedSnapshot.error}'),
+                          Text(
+                              'Error loading groups: ${activeSnapshot.error ?? closedSnapshot.error}'),
                         ],
                       ),
                     );
@@ -113,33 +118,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 800),
                             child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundWhite,
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(25),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
+                                    color: Colors.black.withValues(alpha: 0.08),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
+                              padding: const EdgeInsets.all(4),
                               child: TabBar(
-                                indicator: const BoxDecoration(
+                                indicator: BoxDecoration(
                                   color: AppColors.christmasGreen,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: AppColors.christmasGreen,
-                                      width: 3,
-                                    ),
-                                  ),
+                                  borderRadius: BorderRadius.circular(21),
                                 ),
+                                indicatorPadding: EdgeInsets.zero,
+                                indicatorSize: TabBarIndicatorSize.tab,
+                                dividerColor: Colors.transparent,
                                 labelColor: AppColors.snowWhite,
                                 unselectedLabelColor: AppColors.textSecondary,
                                 labelStyle: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
+                                overlayColor:
+                                    WidgetStateProperty.all(Colors.transparent),
                                 tabs: const [
                                   Tab(text: 'Active Groups'),
                                   Tab(text: 'Closed Groups'),
@@ -174,8 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: const Text('Create Group'),
           ),
           drawer: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
+            child: Column(
               children: [
                 UserAccountsDrawerHeader(
                   decoration: const BoxDecoration(
@@ -217,7 +224,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 24,
                                 height: 24,
                                 child: Center(
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               ),
                               errorWidget: (context, url, error) {
@@ -280,8 +288,63 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const Divider(height: 1),
+
+                // Spacer to push buttons to bottom
+                const Spacer(),
+
+                // About Klaussified Button
+                SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.push('/about');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.christmasGreen,
+                        foregroundColor: AppColors.snowWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 2,
+                      ),
+                      icon: const Icon(Icons.info_outline),
+                      label: const Text('About Klaussified'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final Uri url = Uri.parse('https://ko-fi.com/nairdah');
+                        await launchUrl(url,
+                            mode: LaunchMode.externalApplication);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.christmasRed,
+                        foregroundColor: AppColors.snowWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 2,
+                      ),
+                      icon: Icon(Icons.coffee),
+                      label: Text('Buy me a coffee'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Version text
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   child: Text(
                     AppVersion.version,
                     style: TextStyle(

@@ -37,172 +37,197 @@ class InvitationsScreen extends StatelessWidget {
           title: const Text('Invitations'),
           backgroundColor: AppColors.christmasGreen,
         ),
-        body: StreamBuilder<List<InviteModel>>(
-          stream: inviteRepo.streamUserInvites(currentUserId),
-          builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: StreamBuilder<List<InviteModel>>(
+              stream: inviteRepo.streamUserInvites(currentUserId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text('Error loading invitations: ${snapshot.error}'),
-                ],
-              ),
-            );
-          }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            size: 48, color: AppColors.error),
+                        const SizedBox(height: 16),
+                        Text('Error loading invitations: ${snapshot.error}'),
+                      ],
+                    ),
+                  );
+                }
 
-          final invites = snapshot.data ?? [];
+                final invites = snapshot.data ?? [];
 
-          if (invites.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.mail_outline,
-                    size: 64,
-                    color: AppColors.textSecondary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No pending invitations',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.textSecondary,
+                if (invites.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.mail_outline,
+                          size: 64,
+                          color: AppColors.textSecondary.withValues(alpha: 0.5),
                         ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'When someone invites you to a group,\nit will appear here',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary.withValues(alpha: 0.7),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No pending invitations',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                         ),
-                  ),
-                ],
-              ),
-            );
-          }
+                        const SizedBox(height: 8),
+                        Text(
+                          'When someone invites you to a group,\nit will appear here',
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textSecondary
+                                        .withValues(alpha: 0.7),
+                                  ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: invites.length,
-            itemExtent: 180.0, // Approximate height of invitation card for better scrolling performance
-            itemBuilder: (context, index) {
-              final invite = invites[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 2,
-                child: Padding(
+                return ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.christmasGreen.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.card_giftcard,
-                              color: AppColors.christmasGreen,
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
+                  itemCount: invites.length,
+                  itemExtent:
+                      180.0, // Approximate height of invitation card for better scrolling performance
+                  itemBuilder: (context, index) {
+                    final invite = invites[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Text(
-                                  invite.groupName,
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.christmasGreen,
-                                      ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.christmasGreen
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.card_giftcard,
+                                    color: AppColors.christmasGreen,
+                                    size: 32,
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        invite.groupName,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.christmasGreen,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Invited by ${invite.invitedByName}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 16,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Invited by ${invite.invitedByName}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  _formatDate(invite.createdAt),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
                                         color: AppColors.textSecondary,
                                       ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatDate(invite.createdAt),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () =>
+                                        _declineInvite(context, invite.id),
+                                    icon: const Icon(Icons.close),
+                                    label: const Text('Decline'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.error,
+                                      side: const BorderSide(
+                                          color: AppColors.error),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                    ),
+                                  ),
                                 ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _declineInvite(context, invite.id),
-                              icon: const Icon(Icons.close),
-                              label: const Text('Decline'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.error,
-                                side: const BorderSide(color: AppColors.error),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => _acceptInvite(
+                                      context,
+                                      invite,
+                                      currentUserId,
+                                      authState.user.displayName,
+                                      authState.user.username,
+                                    ),
+                                    icon: const Icon(Icons.check),
+                                    label: const Text('Accept'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.christmasGreen,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _acceptInvite(
-                                context,
-                                invite,
-                                currentUserId,
-                                authState.user.displayName,
-                                authState.user.username,
-                              ),
-                              icon: const Icon(Icons.check),
-                              label: const Text('Accept'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.christmasGreen,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }

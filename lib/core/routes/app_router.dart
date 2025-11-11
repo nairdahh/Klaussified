@@ -14,6 +14,7 @@ import 'package:klaussified/presentation/screens/secret_santa/pick_screen.dart';
 import 'package:klaussified/presentation/screens/secret_santa/reveal_screen.dart';
 import 'package:klaussified/presentation/screens/invitations/invitations_screen.dart';
 import 'package:klaussified/presentation/screens/profile/profile_screen.dart';
+import 'package:klaussified/presentation/screens/about/about_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -185,6 +186,16 @@ class AppRouter {
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
           child: const ProfileScreen(),
+        ),
+      ),
+
+      // About Route
+      GoRoute(
+        path: '/about',
+        name: 'about',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const AboutScreen(),
         ),
       ),
     ],

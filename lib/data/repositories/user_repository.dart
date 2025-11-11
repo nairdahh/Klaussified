@@ -28,8 +28,12 @@ class UserRepository {
         .limit(1)
         .get();
 
-    if (querySnapshot.docs.isEmpty) return null;
-    return UserModel.fromFirestore(querySnapshot.docs.first);
+    if (querySnapshot.docs.isEmpty) {
+      return null;
+    }
+
+    final user = UserModel.fromFirestore(querySnapshot.docs.first);
+    return user;
   }
 
   // Get user by email
@@ -95,12 +99,23 @@ class UserRepository {
 
     await _firestoreService.userDoc(userId).update(updates);
 
-    // If photoURL was updated, also update it in all group memberships
+    // Update profile fields in all group memberships
+    final groupRepo = GroupRepository();
+
+    // Update photoURL in all groups if changed
     if (photoURL != null) {
-      final groupRepo = GroupRepository();
       await groupRepo.updateMemberPhotoURLInAllGroups(
         userId: userId,
         photoURL: photoURL,
+      );
+    }
+
+    // Update username and displayName in all groups if changed
+    if (username != null || displayName != null) {
+      await groupRepo.updateMemberProfileInAllGroups(
+        userId: userId,
+        username: username?.toLowerCase(),
+        displayName: displayName,
       );
     }
   }

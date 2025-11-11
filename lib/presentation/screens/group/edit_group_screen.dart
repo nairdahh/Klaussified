@@ -162,7 +162,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     // Description
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Description (Optional)',
                         prefixIcon: Icon(Icons.description),
                         hintText: 'e.g., Office Christmas party exchange',
@@ -172,10 +172,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Location
                     TextFormField(
                       controller: _locationController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Location (Optional)',
                         prefixIcon: Icon(Icons.location_on),
                         hintText: 'e.g., Office lobby or online',
@@ -184,10 +183,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Budget
                     TextFormField(
                       controller: _budgetController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Budget (Optional)',
                         prefixIcon: Icon(Icons.attach_money),
                         hintText: 'e.g., \$20-30',
@@ -212,7 +210,8 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                           if (_selectedDeadline != null)
                             IconButton(
                               icon: const Icon(Icons.clear),
-                              onPressed: () => setState(() => _selectedDeadline = null),
+                              onPressed: () =>
+                                  setState(() => _selectedDeadline = null),
                               tooltip: 'Clear deadline',
                             ),
                           IconButton(

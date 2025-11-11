@@ -31,7 +31,8 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
   // Animation constants - precise calculations
   static const double itemHeight = 100.0;
   static const double viewportHeight = 400.0; // Container height
-  static const double visibleItems = viewportHeight / itemHeight; // 4 items visible
+  static const double visibleItems =
+      viewportHeight / itemHeight; // 4 items visible
 
   @override
   void initState() {
@@ -50,15 +51,15 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
     // This gives 5000-10000px scroll distance (reasonable for 3 sec animation)
     final int targetScrollItems;
     if (groupSize <= 2) {
-      targetScrollItems = 60;  // 60 items = 6000px scroll
+      targetScrollItems = 60; // 60 items = 6000px scroll
     } else if (groupSize <= 4) {
-      targetScrollItems = 50;  // 50 items = 5000px scroll
+      targetScrollItems = 50; // 50 items = 5000px scroll
     } else if (groupSize <= 6) {
-      targetScrollItems = 45;  // 45 items = 4500px scroll
+      targetScrollItems = 45; // 45 items = 4500px scroll
     } else if (groupSize <= 10) {
-      targetScrollItems = 40;  // 40 items = 4000px scroll
+      targetScrollItems = 40; // 40 items = 4000px scroll
     } else {
-      targetScrollItems = 35;  // 35 items = 3500px scroll
+      targetScrollItems = 35; // 35 items = 3500px scroll
     }
 
     final totalScrollItems = targetScrollItems;
@@ -84,14 +85,16 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
 
     // Center the selected item in the middle of the 400px container (at 200px from top)
     // scrollOffset = (selected item position) - (middle of container) + (half item height to center it)
-    _scrollOffset = (selectedIndex * itemHeight) - (viewportHeight / 2) + (itemHeight / 2);
+    _scrollOffset =
+        (selectedIndex * itemHeight) - (viewportHeight / 2) + (itemHeight / 2);
+
+    // Calculate initial offset to center first visible item at start of animation
+    // This ensures the roulette starts centered
+    final initialOffset = -(viewportHeight / 2 - itemHeight / 2);
 
     // Ensure we don't scroll beyond the list boundaries
     final maxScroll = (_displayList.length * itemHeight) - viewportHeight;
     _scrollOffset = _scrollOffset.clamp(0.0, maxScroll);
-
-    print('DEBUG ROULETTE: groupSize=$groupSize, targetItems=$targetScrollItems, totalItems=${_displayList.length}');
-    print('DEBUG ROULETTE: selectedIndex=$selectedIndex, scrollOffset=$_scrollOffset');
 
     _controller = AnimationController(
       vsync: this,
@@ -105,7 +108,7 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
     );
 
     _animation = Tween<double>(
-      begin: 0,
+      begin: initialOffset,
       end: _scrollOffset,
     ).animate(curve);
 
@@ -181,38 +184,50 @@ class _VerticalSlotMachineState extends State<VerticalSlotMachine>
         borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
-            // Scrolling names - use full container height
-            AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, -_animation.value),
-                  child: Column(
-                    children: _displayList.map((name) {
-                      return SizedBox(
-                        height: itemHeight,
-                        child: Center(
-                          child: Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.snowWhite,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black45,
-                                  blurRadius: 4,
+            // Scrolling names - use full container height with ClipRect to hide overflow
+            SizedBox(
+              height: viewportHeight,
+              width: double.infinity,
+              child: ClipRect(
+                child: OverflowBox(
+                  minHeight: 0,
+                  maxHeight: double.infinity,
+                  alignment: Alignment.topCenter,
+                  child: AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(0, -_animation.value),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: _displayList.map((name) {
+                            return SizedBox(
+                              height: itemHeight,
+                              child: Center(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.snowWhite,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black45,
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              ],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
-                );
-              },
+                ),
+              ),
             ),
 
             // Selection indicator box - centered

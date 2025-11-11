@@ -68,12 +68,16 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         listener: (context, state) {
           if (state is GroupOperationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.success),
+              SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success),
             );
             context.pop();
           } else if (state is GroupError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error),
             );
           }
         },
@@ -87,7 +91,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 constraints: const BoxConstraints(maxWidth: 500),
                 child: Card(
                   elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Form(
@@ -96,7 +101,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Icon(Icons.card_giftcard, size: 64, color: AppColors.christmasGreen),
+                          Icon(Icons.card_giftcard,
+                              size: 64, color: AppColors.christmasGreen),
                           const SizedBox(height: 24),
                           Text(
                             'Create Secret Santa Group',
@@ -121,7 +127,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _descriptionController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Description (Optional)',
                               prefixIcon: Icon(Icons.description),
                               hintText: 'e.g., Office Christmas party exchange',
@@ -132,7 +138,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _locationController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Location (Optional)',
                               prefixIcon: Icon(Icons.location_on),
                               hintText: 'e.g., Office lobby or online',
@@ -142,7 +148,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _budgetController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Budget (Optional)',
                               prefixIcon: Icon(Icons.attach_money),
                               hintText: 'e.g., \$20-30',
@@ -162,7 +168,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             trailing: _selectedDeadline != null
                                 ? IconButton(
                                     icon: const Icon(Icons.clear),
-                                    onPressed: () => setState(() => _selectedDeadline = null),
+                                    onPressed: () => setState(
+                                        () => _selectedDeadline = null),
                                   )
                                 : null,
                             onTap: isLoading ? null : _selectDeadline,
@@ -178,7 +185,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.snowWhite)),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                AppColors.snowWhite)),
                                   )
                                 : const Text('Create Group'),
                           ),

@@ -1,13 +1,15 @@
 name: klaussified
 description: A Secret Santa application for groups
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.24+24
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_web_plugins:
     sdk: flutter
 
   # Firebase
@@ -44,6 +46,7 @@ dependencies:
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
   image_picker: ^1.1.2
+  url_launcher: ^6.3.1
 
   # Validation
   formz: ^0.7.0

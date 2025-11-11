@@ -26,7 +26,8 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     on<GroupCreateRequested>(_onGroupCreateRequested);
     on<GroupStartRequested>(_onGroupStartRequested);
     on<GroupJoinRequested>(_onGroupJoinRequested);
-    on<GroupProfileDetailsUpdateRequested>(_onGroupProfileDetailsUpdateRequested);
+    on<GroupProfileDetailsUpdateRequested>(
+        _onGroupProfileDetailsUpdateRequested);
     on<GroupPickRequested>(_onGroupPickRequested);
     on<GroupRevealRequested>(_onGroupRevealRequested);
     on<GroupInviteSendRequested>(_onGroupInviteSendRequested);
@@ -94,7 +95,8 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
         location: event.location,
         budget: event.budget,
         ownerId: user.uid,
-        ownerName: user.displayName.isNotEmpty ? user.displayName : user.username,
+        ownerName:
+            user.displayName.isNotEmpty ? user.displayName : user.username,
         ownerPhotoURL: user.photoURL,
         informationalDeadline: event.deadline,
       );
@@ -116,7 +118,8 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
   ) async {
     try {
       await _groupRepository.startGroup(event.groupId);
-      emit(const GroupOperationSuccess(message: 'Group started! Members can now pick.'));
+      emit(const GroupOperationSuccess(
+          message: 'Group started! Members can now pick.'));
     } catch (e) {
       emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
@@ -199,27 +202,29 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       );
 
       if (hasPending) {
-        emit(const GroupError(message: 'User already has a pending invite for this group'));
+        emit(const GroupError(
+            message: 'User already has a pending invite for this group'));
         return;
       }
 
       // Check if user is already a member
-      final member = await _groupRepository.getMember(event.groupId, event.inviteeUserId);
+      final member =
+          await _groupRepository.getMember(event.groupId, event.inviteeUserId);
       if (member != null) {
-        emit(const GroupError(message: 'User is already a member of this group'));
+        emit(const GroupError(
+            message: 'User is already a member of this group'));
         return;
       }
 
-      print('Creating invite for user: ${event.inviteeUserId}, group: ${event.groupId}');
       final inviteId = await _inviteRepository.createInvite(
         groupId: event.groupId,
         groupName: event.groupName,
         invitedBy: user.uid,
-        invitedByName: user.displayName.isNotEmpty ? user.displayName : user.username,
+        invitedByName:
+            user.displayName.isNotEmpty ? user.displayName : user.username,
         inviteeUserId: event.inviteeUserId,
         inviteeUsername: event.inviteeUsername,
       );
-      print('Invite created successfully with ID: $inviteId');
 
       emit(const GroupOperationSuccess(message: 'Invitation sent!'));
     } catch (e) {
@@ -250,14 +255,16 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       // Verify member was added successfully with retry logic
       await _verifyMemberAdded(event.groupId, event.userId);
 
-      emit(const GroupOperationSuccess(message: 'Invitation accepted! You joined the group.'));
+      emit(const GroupOperationSuccess(
+          message: 'Invitation accepted! You joined the group.'));
     } catch (e) {
       emit(GroupError(message: ErrorMessages.getUserFriendlyMessage(e)));
     }
   }
 
   // Helper method to verify member was added with retry logic
-  Future<void> _verifyMemberAdded(String groupId, String userId, {int maxRetries = 5}) async {
+  Future<void> _verifyMemberAdded(String groupId, String userId,
+      {int maxRetries = 5}) async {
     for (int i = 0; i < maxRetries; i++) {
       final group = await _groupRepository.getGroupById(groupId);
       if (group?.memberIds.contains(userId) ?? false) {
@@ -269,7 +276,8 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     }
 
     // If we get here, verification failed after all retries
-    throw Exception('Failed to verify member was added to group after $maxRetries attempts');
+    throw Exception(
+        'Failed to verify member was added to group after $maxRetries attempts');
   }
 
   Future<void> _onGroupInviteDeclineRequested(
@@ -356,7 +364,8 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
 class _GroupsLoadedEvent extends GroupEvent {
   final List<dynamic> activeGroups;
   final List<dynamic> closedGroups;
-  const _GroupsLoadedEvent({required this.activeGroups, required this.closedGroups});
+  const _GroupsLoadedEvent(
+      {required this.activeGroups, required this.closedGroups});
 
   @override
   List<Object?> get props => [activeGroups, closedGroups];

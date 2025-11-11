@@ -18,7 +18,8 @@ class EditProfileDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<EditProfileDetailsScreen> createState() => _EditProfileDetailsScreenState();
+  State<EditProfileDetailsScreen> createState() =>
+      _EditProfileDetailsScreenState();
 }
 
 class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
@@ -50,29 +51,26 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
 
     final user = (authBloc.state as AuthAuthenticated).user;
 
-    try {
-      final member = await _groupRepository
-          .streamGroupMembers(widget.groupId)
-          .firstWhere((members) => members.any((m) => m.userId == user.uid))
-          .then((members) => members.firstWhere((m) => m.userId == user.uid));
+    // IMPORTANT: Create local variable to avoid Flutter Web string interpolation bug
+    final groupId = widget.groupId;
 
-      if (mounted) {
+    try {
+      // Get the member document directly from Firestore
+      final memberDoc = await _groupRepository.getMemberDoc(groupId, user.uid);
+
+      if (memberDoc != null && mounted) {
         setState(() {
-          // Use member's real name if set, otherwise use user's displayName as default
-          _realNameController.text = member.profileDetails.realName.isNotEmpty
-              ? member.profileDetails.realName
-              : user.displayName;
-          _hobbiesController.text = member.profileDetails.hobbies;
-          _wishesController.text = member.profileDetails.wishes;
+          // IMPORTANT: Only use saved profile details from THIS group
+          // Do NOT fall back to user.displayName - keep fields empty if not set
+          _realNameController.text = memberDoc.profileDetails.realName;
+          _hobbiesController.text = memberDoc.profileDetails.hobbies;
+          _wishesController.text = memberDoc.profileDetails.wishes;
         });
       }
+      // If member doc doesn't exist, leave all fields empty (don't set defaults)
     } catch (e) {
-      // Member not found or error loading - use displayName as default
-      if (mounted) {
-        setState(() {
-          _realNameController.text = user.displayName;
-        });
-      }
+      // Error loading - leave fields empty
+      // User can fill them in if needed
     }
   }
 
@@ -81,6 +79,10 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
     if (authBloc.state is! AuthAuthenticated) return;
 
     final user = (authBloc.state as AuthAuthenticated).user;
+    final groupBloc = context.read<GroupBloc>();
+
+    // IMPORTANT: Create local variable to avoid Flutter Web string interpolation bug
+    final groupId = widget.groupId;
 
     setState(() => _isLoading = true);
 
@@ -91,13 +93,21 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
         wishes: _wishesController.text.trim(),
       );
 
-      context.read<GroupBloc>().add(
-            GroupProfileDetailsUpdateRequested(
-              groupId: widget.groupId,
-              userId: user.uid,
-              profileDetails: profileDetails,
-            ),
-          );
+      // Save directly to repository to ensure it's persisted
+      await _groupRepository.updateMemberProfileDetails(
+        groupId: groupId,
+        userId: user.uid,
+        profileDetails: profileDetails,
+      );
+
+      // Also trigger the bloc event for state management
+      groupBloc.add(
+        GroupProfileDetailsUpdateRequested(
+          groupId: groupId,
+          userId: user.uid,
+          profileDetails: profileDetails,
+        ),
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +116,9 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
             backgroundColor: AppColors.christmasGreen,
           ),
         );
-        context.pop();
+        if (mounted) {
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -131,112 +143,126 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
         title: const Text('Edit Profile Details'),
         backgroundColor: AppColors.christmasGreen,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.info_outline,
-                            color: AppColors.christmasRed,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Secret Santa Info',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: AppColors.christmasRed,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Secret Santa Info',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'These details will only be visible to your Secret Santa to help them pick the perfect gift for you!',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'These details will only be visible to your Secret Santa to help them pick the perfect gift for you!',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // Real Name Field
-              TextFormField(
-                controller: _realNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Real Name (Optional)',
-                  hintText: 'Your full name',
-                  prefixIcon: Icon(Icons.person),
-                  helperText: 'So your Secret Santa knows who you are',
-                ),
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 20),
+                  // Real Name Field
+                  TextFormField(
+                    controller: _realNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Real Name (Optional)',
+                      hintText: 'Your full name',
+                      prefixIcon: Icon(Icons.person),
+                      helperText: 'So your Secret Santa knows who you are',
+                    ),
+                    enabled: !_isLoading,
+                  ),
+                  const SizedBox(height: 20),
 
-              // Hobbies Field
-              TextFormField(
-                controller: _hobbiesController,
-                decoration: const InputDecoration(
-                  labelText: 'Hobbies & Interests (Optional)',
-                  hintText: 'e.g., Reading, Cooking, Gaming, Sports...',
-                  prefixIcon: Icon(Icons.favorite),
-                  helperText: 'What do you enjoy doing?',
-                ),
-                maxLines: 3,
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 20),
+                  // Hobbies Field
+                  TextFormField(
+                    controller: _hobbiesController,
+                    minLines: 1,
+                    maxLines: 7,
+                    decoration: const InputDecoration(
+                      labelText: 'Hobbies & Interests (Optional)',
+                      hintText: 'e.g., Reading, Cooking, Gaming, Sports...',
+                      prefixIcon: Icon(Icons.favorite),
+                      helperText: 'What do you enjoy doing?',
+                      alignLabelWithHint: true,
+                    ),
+                    enabled: !_isLoading,
+                  ),
+                  const SizedBox(height: 20),
 
-              // Wishes Field
-              TextFormField(
-                controller: _wishesController,
-                decoration: const InputDecoration(
-                  labelText: 'Gift Wishes & Hints (Optional)',
-                  hintText: 'e.g., I love chocolate, prefer practical gifts, size M...',
-                  prefixIcon: Icon(Icons.card_giftcard),
-                  helperText: 'Help your Secret Santa with gift ideas',
-                ),
-                maxLines: 4,
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 32),
+                  // Wishes Field
+                  TextFormField(
+                    controller: _wishesController,
+                    minLines: 1,
+                    maxLines: 7,
+                    decoration: const InputDecoration(
+                      labelText: 'Gift Wishes & Hints (Optional)',
+                      hintText: 'e.g., I love chocolate, prefer practical gifts, size M...',
+                      prefixIcon: Icon(Icons.card_giftcard),
+                      helperText: 'Help your Secret Santa with gift ideas',
+                      alignLabelWithHint: true,
+                    ),
+                    enabled: !_isLoading,
+                  ),
+                  const SizedBox(height: 32),
 
-              // Save Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveDetails,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.christmasGreen,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.snowWhite,
+                  // Save Button
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _saveDetails,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.christmasGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.snowWhite,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Save Details',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        ),
-                      )
-                    : const Text(
-                        'Save Details',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

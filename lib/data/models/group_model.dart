@@ -66,10 +66,21 @@ class GroupModel with _$GroupModel {
       isPending && memberCount >= AppConstants.minGroupMembers;
 
   // Check if reveal is available
+  // Groups can only be archived after December 28, 2025
   bool get canReveal {
     if (!isStarted || !isAllPicked) return false;
-    if (revealDate == null) return false;
-    return DateTime.now().isAfter(revealDate!);
+
+    // Minimum archive date: December 28, 2025 at 00:00:00
+    final minimumArchiveDate = DateTime(2025, 12, 28);
+    final now = DateTime.now();
+
+    // Must be after December 28, 2025
+    if (now.isBefore(minimumArchiveDate)) return false;
+
+    // If there's a specific reveal date set, respect it as well
+    if (revealDate != null && now.isBefore(revealDate!)) return false;
+
+    return true;
   }
 
   // Get days until deadline
