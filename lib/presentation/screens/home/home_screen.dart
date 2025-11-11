@@ -322,8 +322,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         final Uri url = Uri.parse('https://ko-fi.com/nairdah');
-                        await launchUrl(url,
-                            mode: LaunchMode.externalApplication);
+                        if (!await launchUrl(
+                          url,
+                          mode: LaunchMode.externalApplication,
+                          webOnlyWindowName: '_blank',
+                        )) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open link'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
                         if (context.mounted) {
                           Navigator.pop(context);
                         }
