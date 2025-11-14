@@ -8,6 +8,7 @@ import 'package:klaussified/business_logic/group/group_bloc.dart';
 import 'package:klaussified/business_logic/group/group_event.dart';
 import 'package:klaussified/core/routes/route_names.dart';
 import 'package:klaussified/core/theme/colors.dart';
+import 'package:klaussified/core/utils/snackbar_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,15 +44,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1a1a1a)
+          : AppColors.backgroundLight,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
+            SnackBarHelper.showError(
+              context,
+              message: state.message,
             );
           } else if (state is AuthAuthenticated) {
             // Load groups immediately after login

@@ -99,6 +99,7 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
             user.displayName.isNotEmpty ? user.displayName : user.username,
         ownerPhotoURL: user.photoURL,
         informationalDeadline: event.deadline,
+        eventDate: event.eventDate,
       );
 
       emit(const GroupOperationSuccess(message: 'Group created successfully!'));

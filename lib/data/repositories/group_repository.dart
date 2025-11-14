@@ -23,6 +23,7 @@ class GroupRepository {
     required String ownerName,
     String ownerPhotoURL = '',
     DateTime? informationalDeadline,
+    DateTime? eventDate,
   }) async {
     final groupRef = _firestoreService.groupsCollection.doc();
 
@@ -52,6 +53,7 @@ class GroupRepository {
       status: AppConstants.statusPending,
       informationalDeadline: informationalDeadline,
       revealDate: calculatedRevealDate,
+      eventDate: eventDate,
       memberCount: 0, // Will be incremented to 1 when owner is added as member
       pickedCount: 0,
       memberIds: [], // Will be populated when owner is added as member
@@ -336,6 +338,7 @@ class GroupRepository {
     String location = '',
     String budget = '',
     DateTime? informationalDeadline,
+    DateTime? eventDate,
   }) async {
     // Recalculate reveal date based on new deadline
     final now = DateTime.now();
@@ -360,6 +363,9 @@ class GroupRepository {
           ? Timestamp.fromDate(informationalDeadline)
           : null,
       'revealDate': Timestamp.fromDate(calculatedRevealDate),
+      'eventDate': eventDate != null
+          ? Timestamp.fromDate(eventDate)
+          : null,
     });
   }
 }

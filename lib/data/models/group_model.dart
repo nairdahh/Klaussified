@@ -27,6 +27,8 @@ class GroupModel with _$GroupModel {
     @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
         DateTime? revealDate,
     @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+        DateTime? eventDate, // When the gift exchange event/meeting occurs
+    @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
         DateTime? revealedAt,
     @Default(0) int memberCount,
     @Default(0) int pickedCount,

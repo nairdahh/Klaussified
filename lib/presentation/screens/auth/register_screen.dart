@@ -8,6 +8,7 @@ import 'package:klaussified/business_logic/group/group_bloc.dart';
 import 'package:klaussified/business_logic/group/group_event.dart';
 import 'package:klaussified/core/routes/route_names.dart';
 import 'package:klaussified/core/theme/colors.dart';
+import 'package:klaussified/core/utils/snackbar_helper.dart';
 import 'package:klaussified/core/constants/constants.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -55,15 +56,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1a1a1a)
+          : AppColors.backgroundLight,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
+            SnackBarHelper.showError(
+              context,
+              message: state.message,
             );
           } else if (state is AuthAuthenticated) {
             // Load groups immediately after registration
@@ -126,6 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
+                              cursorColor: AppColors.christmasGreen,
                               decoration: const InputDecoration(
                                 labelText: 'Email',
                                 prefixIcon: Icon(Icons.email),
@@ -146,10 +148,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             // Username Field
                             TextFormField(
                               controller: _usernameController,
+                              cursorColor: AppColors.christmasGreen,
                               decoration: const InputDecoration(
                                 labelText: 'Username',
                                 prefixIcon: Icon(Icons.person),
-                                helperText: 'Lowercase letters, numbers, and underscores only',
+                                helperText: 'Letters, numbers, dots, and underscores',
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -162,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   return 'Username must be less than ${AppConstants.maxUsernameLength} characters';
                                 }
                                 if (!AppConstants.usernameRegex.hasMatch(value)) {
-                                  return 'Username can only contain letters, numbers, and underscores';
+                                  return 'It can only contain letters, numbers, dots, and underscores';
                                 }
                                 return null;
                               },
@@ -183,6 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             // Real Name Field (Optional)
                             TextFormField(
                               controller: _displayNameController,
+                              cursorColor: AppColors.christmasGreen,
                               decoration: const InputDecoration(
                                 labelText: 'Real Name (Optional)',
                                 prefixIcon: Icon(Icons.badge),
@@ -195,6 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
+                              cursorColor: AppColors.christmasGreen,
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 prefixIcon: const Icon(Icons.lock),
@@ -228,6 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
+                              cursorColor: AppColors.christmasGreen,
                               decoration: InputDecoration(
                                 labelText: 'Confirm Password',
                                 prefixIcon: const Icon(Icons.lock),

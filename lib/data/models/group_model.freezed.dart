@@ -38,6 +38,9 @@ mixin _$GroupModel {
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime? get revealDate => throw _privateConstructorUsedError;
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+  DateTime? get eventDate =>
+      throw _privateConstructorUsedError; // When the gift exchange event/meeting occurs
+  @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime? get revealedAt => throw _privateConstructorUsedError;
   int get memberCount => throw _privateConstructorUsedError;
   int get pickedCount => throw _privateConstructorUsedError;
@@ -77,6 +80,8 @@ abstract class $GroupModelCopyWith<$Res> {
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime? revealDate,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+      DateTime? eventDate,
+      @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime? revealedAt,
       int memberCount,
       int pickedCount,
@@ -110,6 +115,7 @@ class _$GroupModelCopyWithImpl<$Res, $Val extends GroupModel>
     Object? startedAt = freezed,
     Object? informationalDeadline = freezed,
     Object? revealDate = freezed,
+    Object? eventDate = freezed,
     Object? revealedAt = freezed,
     Object? memberCount = null,
     Object? pickedCount = null,
@@ -164,6 +170,10 @@ class _$GroupModelCopyWithImpl<$Res, $Val extends GroupModel>
           ? _value.revealDate
           : revealDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      eventDate: freezed == eventDate
+          ? _value.eventDate
+          : eventDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       revealedAt: freezed == revealedAt
           ? _value.revealedAt
           : revealedAt // ignore: cast_nullable_to_non_nullable
@@ -210,6 +220,8 @@ abstract class _$$GroupModelImplCopyWith<$Res>
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime? revealDate,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+      DateTime? eventDate,
+      @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime? revealedAt,
       int memberCount,
       int pickedCount,
@@ -241,6 +253,7 @@ class __$$GroupModelImplCopyWithImpl<$Res>
     Object? startedAt = freezed,
     Object? informationalDeadline = freezed,
     Object? revealDate = freezed,
+    Object? eventDate = freezed,
     Object? revealedAt = freezed,
     Object? memberCount = null,
     Object? pickedCount = null,
@@ -295,6 +308,10 @@ class __$$GroupModelImplCopyWithImpl<$Res>
           ? _value.revealDate
           : revealDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      eventDate: freezed == eventDate
+          ? _value.eventDate
+          : eventDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       revealedAt: freezed == revealedAt
           ? _value.revealedAt
           : revealedAt // ignore: cast_nullable_to_non_nullable
@@ -335,6 +352,8 @@ class _$GroupModelImpl extends _GroupModel {
       this.informationalDeadline,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       this.revealDate,
+      @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+      this.eventDate,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       this.revealedAt,
       this.memberCount = 0,
@@ -383,6 +402,10 @@ class _$GroupModelImpl extends _GroupModel {
   final DateTime? revealDate;
   @override
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+  final DateTime? eventDate;
+// When the gift exchange event/meeting occurs
+  @override
+  @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   final DateTime? revealedAt;
   @override
   @JsonKey()
@@ -401,7 +424,7 @@ class _$GroupModelImpl extends _GroupModel {
 
   @override
   String toString() {
-    return 'GroupModel(id: $id, name: $name, ownerId: $ownerId, ownerName: $ownerName, createdAt: $createdAt, description: $description, location: $location, budget: $budget, status: $status, startedAt: $startedAt, informationalDeadline: $informationalDeadline, revealDate: $revealDate, revealedAt: $revealedAt, memberCount: $memberCount, pickedCount: $pickedCount, memberIds: $memberIds)';
+    return 'GroupModel(id: $id, name: $name, ownerId: $ownerId, ownerName: $ownerName, createdAt: $createdAt, description: $description, location: $location, budget: $budget, status: $status, startedAt: $startedAt, informationalDeadline: $informationalDeadline, revealDate: $revealDate, eventDate: $eventDate, revealedAt: $revealedAt, memberCount: $memberCount, pickedCount: $pickedCount, memberIds: $memberIds)';
   }
 
   @override
@@ -428,6 +451,8 @@ class _$GroupModelImpl extends _GroupModel {
                 other.informationalDeadline == informationalDeadline) &&
             (identical(other.revealDate, revealDate) ||
                 other.revealDate == revealDate) &&
+            (identical(other.eventDate, eventDate) ||
+                other.eventDate == eventDate) &&
             (identical(other.revealedAt, revealedAt) ||
                 other.revealedAt == revealedAt) &&
             (identical(other.memberCount, memberCount) ||
@@ -454,6 +479,7 @@ class _$GroupModelImpl extends _GroupModel {
       startedAt,
       informationalDeadline,
       revealDate,
+      eventDate,
       revealedAt,
       memberCount,
       pickedCount,
@@ -494,6 +520,8 @@ abstract class _GroupModel extends GroupModel {
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       final DateTime? revealDate,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+      final DateTime? eventDate,
+      @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       final DateTime? revealedAt,
       final int memberCount,
       final int pickedCount,
@@ -531,6 +559,9 @@ abstract class _GroupModel extends GroupModel {
   @override
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime? get revealDate;
+  @override
+  @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
+  DateTime? get eventDate; // When the gift exchange event/meeting occurs
   @override
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime? get revealedAt;

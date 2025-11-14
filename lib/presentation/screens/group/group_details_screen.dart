@@ -147,8 +147,16 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               const SizedBox(height: 8),
                               _buildInfoRow(
                                 Icons.calendar_today,
-                                'Deadline',
+                                'Pick Deadline',
                                 '${group.informationalDeadline!.day}/${group.informationalDeadline!.month}/${group.informationalDeadline!.year}',
+                              ),
+                            ],
+                            if (group.eventDate != null) ...[
+                              const SizedBox(height: 8),
+                              _buildInfoRow(
+                                Icons.event,
+                                'Event Date',
+                                '${group.eventDate!.day}/${group.eventDate!.month}/${group.eventDate!.year}',
                               ),
                             ],
                           ],
@@ -272,7 +280,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                               Text(
                                 'The group is now complete! The creator will be able to archive the group after ${group.revealDate!.day}/${group.revealDate!.month}/${group.revealDate!.year} and all assignments will be revealed. Until then, Merry Christmas and we hope you enjoy your gifts!',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.textPrimary,
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
                                       height: 1.5,
                                     ),
                                 textAlign: TextAlign.center,
@@ -864,6 +874,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 'Pick Deadline',
                 group.informationalDeadline != null
                     ? _formatDate(group.informationalDeadline!)
+                    : 'None',
+              ),
+              const Divider(height: 20),
+              _buildDialogInfoRow(
+                'Event Date',
+                group.eventDate != null
+                    ? _formatDate(group.eventDate!)
                     : 'None',
               ),
               const Divider(height: 20),

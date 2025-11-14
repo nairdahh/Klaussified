@@ -20,6 +20,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _locationController = TextEditingController();
   final _budgetController = TextEditingController();
   DateTime? _selectedDeadline;
+  DateTime? _selectedEventDate;
 
   @override
   void dispose() {
@@ -44,6 +45,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     }
   }
 
+  Future<void> _selectEventDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now.add(const Duration(days: 14)),
+      firstDate: now,
+      lastDate: DateTime(now.year + 1, 12, 31),
+    );
+
+    if (picked != null) {
+      setState(() => _selectedEventDate = picked);
+    }
+  }
+
   void _createGroup() {
     if (_formKey.currentState!.validate()) {
       context.read<GroupBloc>().add(
@@ -53,6 +68,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               location: _locationController.text.trim(),
               budget: _budgetController.text.trim(),
               deadline: _selectedDeadline,
+              eventDate: _selectedEventDate,
             ),
           );
     }
@@ -162,7 +178,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             title: const Text('Pick Deadline (Optional)'),
                             subtitle: Text(
                               _selectedDeadline == null
-                                  ? 'No deadline set'
+                                  ? 'No deadline set - When picks must be completed'
                                   : 'Deadline: ${_selectedDeadline!.day}/${_selectedDeadline!.month}/${_selectedDeadline!.year}',
                             ),
                             trailing: _selectedDeadline != null
@@ -173,6 +189,25 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                   )
                                 : null,
                             onTap: isLoading ? null : _selectDeadline,
+                          ),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.event),
+                            title: const Text('Event Date (Optional)'),
+                            subtitle: Text(
+                              _selectedEventDate == null
+                                  ? 'No event date set - When gift exchange happens'
+                                  : 'Event: ${_selectedEventDate!.day}/${_selectedEventDate!.month}/${_selectedEventDate!.year}',
+                            ),
+                            trailing: _selectedEventDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () => setState(
+                                        () => _selectedEventDate = null),
+                                  )
+                                : null,
+                            onTap: isLoading ? null : _selectEventDate,
                           ),
                           const SizedBox(height: 32),
                           ElevatedButton(

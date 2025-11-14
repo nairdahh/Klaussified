@@ -25,6 +25,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
   final GroupRepository _groupRepository = GroupRepository();
   bool _isLoading = false;
   DateTime? _selectedDeadline;
+  DateTime? _selectedEventDate;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           _locationController.text = group.location;
           _budgetController.text = group.budget;
           _selectedDeadline = group.informationalDeadline;
+          _selectedEventDate = group.eventDate;
           _isLoading = false;
         });
       } else if (mounted) {
@@ -86,6 +88,20 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     }
   }
 
+  Future<void> _selectEventDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedEventDate ?? now.add(const Duration(days: 14)),
+      firstDate: now,
+      lastDate: DateTime(now.year + 1, 12, 31),
+    );
+
+    if (picked != null) {
+      setState(() => _selectedEventDate = picked);
+    }
+  }
+
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -99,6 +115,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
         location: _locationController.text.trim(),
         budget: _budgetController.text.trim(),
         informationalDeadline: _selectedDeadline,
+        eventDate: _selectedEventDate,
       );
 
       if (mounted) {
@@ -201,7 +218,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                       title: const Text('Pick Deadline (Optional)'),
                       subtitle: Text(
                         _selectedDeadline == null
-                            ? 'No deadline set'
+                            ? 'No deadline set - When picks must be completed'
                             : '${_selectedDeadline!.day}/${_selectedDeadline!.month}/${_selectedDeadline!.year}',
                       ),
                       trailing: Row(
@@ -218,6 +235,36 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                             icon: const Icon(Icons.calendar_month),
                             onPressed: _selectDeadline,
                             tooltip: 'Select deadline',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Event Date
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.event),
+                      title: const Text('Event Date (Optional)'),
+                      subtitle: Text(
+                        _selectedEventDate == null
+                            ? 'No event date set - When gift exchange happens'
+                            : '${_selectedEventDate!.day}/${_selectedEventDate!.month}/${_selectedEventDate!.year}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_selectedEventDate != null)
+                            IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () =>
+                                  setState(() => _selectedEventDate = null),
+                              tooltip: 'Clear event date',
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.calendar_month),
+                            onPressed: _selectEventDate,
+                            tooltip: 'Select event date',
                           ),
                         ],
                       ),

@@ -19,6 +19,18 @@ _$UserModelImpl _$$UserModelImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      emailNotificationsEnabled:
+          json['emailNotificationsEnabled'] as bool? ?? true,
+      emailInviteNotifications:
+          json['emailInviteNotifications'] as bool? ?? true,
+      emailDeadlineNotifications:
+          json['emailDeadlineNotifications'] as bool? ?? true,
+      browserNotificationsEnabled:
+          json['browserNotificationsEnabled'] as bool? ?? true,
+      browserInviteNotifications:
+          json['browserInviteNotifications'] as bool? ?? true,
+      browserDeadlineNotifications:
+          json['browserDeadlineNotifications'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
@@ -31,4 +43,10 @@ Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
       'createdAt': _timestampToJson(instance.createdAt),
       'updatedAt': _timestampToJson(instance.updatedAt),
       'authProviders': instance.authProviders,
+      'emailNotificationsEnabled': instance.emailNotificationsEnabled,
+      'emailInviteNotifications': instance.emailInviteNotifications,
+      'emailDeadlineNotifications': instance.emailDeadlineNotifications,
+      'browserNotificationsEnabled': instance.browserNotificationsEnabled,
+      'browserInviteNotifications': instance.browserInviteNotifications,
+      'browserDeadlineNotifications': instance.browserDeadlineNotifications,
     };

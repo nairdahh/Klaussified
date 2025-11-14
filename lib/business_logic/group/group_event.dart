@@ -21,15 +21,17 @@ class GroupCreateRequested extends GroupEvent {
   final String location;
   final String budget;
   final DateTime? deadline;
+  final DateTime? eventDate;
   const GroupCreateRequested({
     required this.name,
     this.description = '',
     this.location = '',
     this.budget = '',
     this.deadline,
+    this.eventDate,
   });
   @override
-  List<Object?> get props => [name, description, location, budget, deadline];
+  List<Object?> get props => [name, description, location, budget, deadline, eventDate];
 }
 
 class GroupStartRequested extends GroupEvent {

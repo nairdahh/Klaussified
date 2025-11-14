@@ -29,7 +29,15 @@ mixin _$UserModel {
   DateTime get createdAt => throw _privateConstructorUsedError;
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime get updatedAt => throw _privateConstructorUsedError;
-  List<String> get authProviders => throw _privateConstructorUsedError;
+  List<String> get authProviders =>
+      throw _privateConstructorUsedError; // Email notification preferences
+  bool get emailNotificationsEnabled => throw _privateConstructorUsedError;
+  bool get emailInviteNotifications => throw _privateConstructorUsedError;
+  bool get emailDeadlineNotifications =>
+      throw _privateConstructorUsedError; // Browser notification preferences (placeholder)
+  bool get browserNotificationsEnabled => throw _privateConstructorUsedError;
+  bool get browserInviteNotifications => throw _privateConstructorUsedError;
+  bool get browserDeadlineNotifications => throw _privateConstructorUsedError;
 
   /// Serializes this UserModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,7 +64,13 @@ abstract class $UserModelCopyWith<$Res> {
       DateTime createdAt,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime updatedAt,
-      List<String> authProviders});
+      List<String> authProviders,
+      bool emailNotificationsEnabled,
+      bool emailInviteNotifications,
+      bool emailDeadlineNotifications,
+      bool browserNotificationsEnabled,
+      bool browserInviteNotifications,
+      bool browserDeadlineNotifications});
 }
 
 /// @nodoc
@@ -82,6 +96,12 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? authProviders = null,
+    Object? emailNotificationsEnabled = null,
+    Object? emailInviteNotifications = null,
+    Object? emailDeadlineNotifications = null,
+    Object? browserNotificationsEnabled = null,
+    Object? browserInviteNotifications = null,
+    Object? browserDeadlineNotifications = null,
   }) {
     return _then(_value.copyWith(
       uid: null == uid
@@ -116,6 +136,30 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
           ? _value.authProviders
           : authProviders // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      emailNotificationsEnabled: null == emailNotificationsEnabled
+          ? _value.emailNotificationsEnabled
+          : emailNotificationsEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      emailInviteNotifications: null == emailInviteNotifications
+          ? _value.emailInviteNotifications
+          : emailInviteNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
+      emailDeadlineNotifications: null == emailDeadlineNotifications
+          ? _value.emailDeadlineNotifications
+          : emailDeadlineNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
+      browserNotificationsEnabled: null == browserNotificationsEnabled
+          ? _value.browserNotificationsEnabled
+          : browserNotificationsEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      browserInviteNotifications: null == browserInviteNotifications
+          ? _value.browserInviteNotifications
+          : browserInviteNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
+      browserDeadlineNotifications: null == browserDeadlineNotifications
+          ? _value.browserDeadlineNotifications
+          : browserDeadlineNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -138,7 +182,13 @@ abstract class _$$UserModelImplCopyWith<$Res>
       DateTime createdAt,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       DateTime updatedAt,
-      List<String> authProviders});
+      List<String> authProviders,
+      bool emailNotificationsEnabled,
+      bool emailInviteNotifications,
+      bool emailDeadlineNotifications,
+      bool browserNotificationsEnabled,
+      bool browserInviteNotifications,
+      bool browserDeadlineNotifications});
 }
 
 /// @nodoc
@@ -162,6 +212,12 @@ class __$$UserModelImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? authProviders = null,
+    Object? emailNotificationsEnabled = null,
+    Object? emailInviteNotifications = null,
+    Object? emailDeadlineNotifications = null,
+    Object? browserNotificationsEnabled = null,
+    Object? browserInviteNotifications = null,
+    Object? browserDeadlineNotifications = null,
   }) {
     return _then(_$UserModelImpl(
       uid: null == uid
@@ -196,6 +252,30 @@ class __$$UserModelImplCopyWithImpl<$Res>
           ? _value._authProviders
           : authProviders // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      emailNotificationsEnabled: null == emailNotificationsEnabled
+          ? _value.emailNotificationsEnabled
+          : emailNotificationsEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      emailInviteNotifications: null == emailInviteNotifications
+          ? _value.emailInviteNotifications
+          : emailInviteNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
+      emailDeadlineNotifications: null == emailDeadlineNotifications
+          ? _value.emailDeadlineNotifications
+          : emailDeadlineNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
+      browserNotificationsEnabled: null == browserNotificationsEnabled
+          ? _value.browserNotificationsEnabled
+          : browserNotificationsEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      browserInviteNotifications: null == browserInviteNotifications
+          ? _value.browserInviteNotifications
+          : browserInviteNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
+      browserDeadlineNotifications: null == browserDeadlineNotifications
+          ? _value.browserDeadlineNotifications
+          : browserDeadlineNotifications // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -213,7 +293,13 @@ class _$UserModelImpl extends _UserModel {
       required this.createdAt,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       required this.updatedAt,
-      final List<String> authProviders = const []})
+      final List<String> authProviders = const [],
+      this.emailNotificationsEnabled = true,
+      this.emailInviteNotifications = true,
+      this.emailDeadlineNotifications = true,
+      this.browserNotificationsEnabled = true,
+      this.browserInviteNotifications = true,
+      this.browserDeadlineNotifications = true})
       : _authProviders = authProviders,
         super._();
 
@@ -247,9 +333,30 @@ class _$UserModelImpl extends _UserModel {
     return EqualUnmodifiableListView(_authProviders);
   }
 
+// Email notification preferences
+  @override
+  @JsonKey()
+  final bool emailNotificationsEnabled;
+  @override
+  @JsonKey()
+  final bool emailInviteNotifications;
+  @override
+  @JsonKey()
+  final bool emailDeadlineNotifications;
+// Browser notification preferences (placeholder)
+  @override
+  @JsonKey()
+  final bool browserNotificationsEnabled;
+  @override
+  @JsonKey()
+  final bool browserInviteNotifications;
+  @override
+  @JsonKey()
+  final bool browserDeadlineNotifications;
+
   @override
   String toString() {
-    return 'UserModel(uid: $uid, email: $email, username: $username, displayName: $displayName, photoURL: $photoURL, createdAt: $createdAt, updatedAt: $updatedAt, authProviders: $authProviders)';
+    return 'UserModel(uid: $uid, email: $email, username: $username, displayName: $displayName, photoURL: $photoURL, createdAt: $createdAt, updatedAt: $updatedAt, authProviders: $authProviders, emailNotificationsEnabled: $emailNotificationsEnabled, emailInviteNotifications: $emailInviteNotifications, emailDeadlineNotifications: $emailDeadlineNotifications, browserNotificationsEnabled: $browserNotificationsEnabled, browserInviteNotifications: $browserInviteNotifications, browserDeadlineNotifications: $browserDeadlineNotifications)';
   }
 
   @override
@@ -270,7 +377,27 @@ class _$UserModelImpl extends _UserModel {
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             const DeepCollectionEquality()
-                .equals(other._authProviders, _authProviders));
+                .equals(other._authProviders, _authProviders) &&
+            (identical(other.emailNotificationsEnabled, emailNotificationsEnabled) ||
+                other.emailNotificationsEnabled == emailNotificationsEnabled) &&
+            (identical(other.emailInviteNotifications, emailInviteNotifications) ||
+                other.emailInviteNotifications == emailInviteNotifications) &&
+            (identical(other.emailDeadlineNotifications,
+                    emailDeadlineNotifications) ||
+                other.emailDeadlineNotifications ==
+                    emailDeadlineNotifications) &&
+            (identical(other.browserNotificationsEnabled,
+                    browserNotificationsEnabled) ||
+                other.browserNotificationsEnabled ==
+                    browserNotificationsEnabled) &&
+            (identical(other.browserInviteNotifications,
+                    browserInviteNotifications) ||
+                other.browserInviteNotifications ==
+                    browserInviteNotifications) &&
+            (identical(other.browserDeadlineNotifications,
+                    browserDeadlineNotifications) ||
+                other.browserDeadlineNotifications ==
+                    browserDeadlineNotifications));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -284,7 +411,13 @@ class _$UserModelImpl extends _UserModel {
       photoURL,
       createdAt,
       updatedAt,
-      const DeepCollectionEquality().hash(_authProviders));
+      const DeepCollectionEquality().hash(_authProviders),
+      emailNotificationsEnabled,
+      emailInviteNotifications,
+      emailDeadlineNotifications,
+      browserNotificationsEnabled,
+      browserInviteNotifications,
+      browserDeadlineNotifications);
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -313,7 +446,13 @@ abstract class _UserModel extends UserModel {
       required final DateTime createdAt,
       @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
       required final DateTime updatedAt,
-      final List<String> authProviders}) = _$UserModelImpl;
+      final List<String> authProviders,
+      final bool emailNotificationsEnabled,
+      final bool emailInviteNotifications,
+      final bool emailDeadlineNotifications,
+      final bool browserNotificationsEnabled,
+      final bool browserInviteNotifications,
+      final bool browserDeadlineNotifications}) = _$UserModelImpl;
   const _UserModel._() : super._();
 
   factory _UserModel.fromJson(Map<String, dynamic> json) =
@@ -336,7 +475,20 @@ abstract class _UserModel extends UserModel {
   @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
   DateTime get updatedAt;
   @override
-  List<String> get authProviders;
+  List<String> get authProviders; // Email notification preferences
+  @override
+  bool get emailNotificationsEnabled;
+  @override
+  bool get emailInviteNotifications;
+  @override
+  bool
+      get emailDeadlineNotifications; // Browser notification preferences (placeholder)
+  @override
+  bool get browserNotificationsEnabled;
+  @override
+  bool get browserInviteNotifications;
+  @override
+  bool get browserDeadlineNotifications;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.

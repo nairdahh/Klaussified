@@ -1,4 +1,7 @@
 class RouteNames {
+  // Landing
+  static const String landing = '/landing';
+
   // Auth Routes
   static const String splash = '/';
   static const String login = '/login';
@@ -9,6 +12,8 @@ class RouteNames {
   static const String home = '/home';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
+  static const String settings = '/settings';
+  static const String admin = '/admin';
 
   // Group Routes
   static const String createGroup = '/create-group';
@@ -23,14 +28,19 @@ class RouteNames {
   // Invitations
   static const String invitations = '/invitations';
 
+  // Other Routes
+  static const String unsubscribe = '/unsubscribe';
+
   // Helper method to build group detail route
   static String getGroupDetailsRoute(String groupId) => '/group/$groupId';
 
   // Helper method to build invite route
-  static String getInviteMembersRoute(String groupId) => '/group/$groupId/invite';
+  static String getInviteMembersRoute(String groupId) =>
+      '/group/$groupId/invite';
 
   // Helper method to build edit profile details route
-  static String getEditProfileDetailsRoute(String groupId) => '/group/$groupId/edit-details';
+  static String getEditProfileDetailsRoute(String groupId) =>
+      '/group/$groupId/edit-details';
 
   // Helper method to build pick route
   static String getPickRoute(String groupId) => '/group/$groupId/pick';

@@ -46,7 +46,7 @@ class AppConstants {
   // Username Constraints
   static const int minUsernameLength = 3;
   static const int maxUsernameLength = 20;
-  static final RegExp usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
+  static final RegExp usernameRegex = RegExp(r'^[a-zA-Z0-9_.]+$');
 
   // Password Constraints
   static const int minPasswordLength = 8;

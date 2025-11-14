@@ -64,6 +64,8 @@ class AuthRepository {
 
       await _userRepository.createUser(userModel);
 
+      // Welcome email disabled - use testWelcomeEmail function for manual testing
+
       return userModel;
     } catch (e) {
       rethrow;

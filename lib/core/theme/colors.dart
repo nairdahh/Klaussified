@@ -57,3 +57,59 @@ class AppColors {
   static const Color pending = warning;   // Orange for pending actions
   static const Color closed = textSecondary; // Gray for closed groups
 }
+
+/// Catppuccin Color Palette - Mocha (Dark) variant
+class CatppuccinColors {
+  // Catppuccin Mocha - Base colors
+  static const Color rosewater = Color(0xFFF5E0DC);
+  static const Color flamingo = Color(0xFFF2CDCD);
+  static const Color pink = Color(0xFFF5C2E7);
+  static const Color mauve = Color(0xFFCBA6F7);
+  static const Color red = Color(0xFFF38BA8);
+  static const Color maroon = Color(0xFFEBA0AC);
+  static const Color peach = Color(0xFFFAB387);
+  static const Color yellow = Color(0xFFF9E2AF);
+  static const Color green = Color(0xFFA6E3A1);
+  static const Color teal = Color(0xFF94E2D5);
+  static const Color sky = Color(0xFF89DCEB);
+  static const Color sapphire = Color(0xFF74C7EC);
+  static const Color blue = Color(0xFF89B4FA);
+  static const Color lavender = Color(0xFFB4BEFE);
+
+  // Catppuccin Mocha - Surface colors (Dark)
+  static const Color base = Color(0xFF1E1E2E);
+  static const Color mantle = Color(0xFF181825);
+  static const Color crust = Color(0xFF11111B);
+
+  // Catppuccin Mocha - Overlay colors
+  static const Color surface0 = Color(0xFF313244);
+  static const Color surface1 = Color(0xFF45475A);
+  static const Color surface2 = Color(0xFF585B70);
+
+  // Catppuccin Mocha - Text colors
+  static const Color text = Color(0xFFCDD6F4);
+  static const Color subtext1 = Color(0xFFBAC2DE);
+  static const Color subtext0 = Color(0xFFA6ADC8);
+
+  // Catppuccin Latte - Surface colors (Light)
+  static const Color latteBase = Color(0xFFEFF1F5);
+  static const Color latteMantle = Color(0xFFE6E9EF);
+  static const Color latteCrust = Color(0xFFDCE0E8);
+
+  // Catppuccin Latte - Overlay colors
+  static const Color latteSurface0 = Color(0xFFCCD0DA);
+  static const Color latteSurface1 = Color(0xFFBCC0CC);
+  static const Color latteSurface2 = Color(0xFFACB0BE);
+
+  // Catppuccin Latte - Text colors
+  static const Color latteText = Color(0xFF4C4F69);
+  static const Color latteSubtext1 = Color(0xFF5C5F77);
+  static const Color latteSubtext0 = Color(0xFF6C6F85);
+
+  // Catppuccin Latte - Main colors for light mode
+  static const Color latteRed = Color(0xFFD20F39);
+  static const Color latteGreen = Color(0xFF40A02B);
+  static const Color latteBlue = Color(0xFF1E66F5);
+  static const Color lattePeach = Color(0xFFFE640B);
+  static const Color latteMauve = Color(0xFF8839EF);
+}

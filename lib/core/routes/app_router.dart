@@ -15,6 +15,10 @@ import 'package:klaussified/presentation/screens/secret_santa/reveal_screen.dart
 import 'package:klaussified/presentation/screens/invitations/invitations_screen.dart';
 import 'package:klaussified/presentation/screens/profile/profile_screen.dart';
 import 'package:klaussified/presentation/screens/about/about_screen.dart';
+import 'package:klaussified/presentation/screens/settings/settings_screen.dart';
+import 'package:klaussified/presentation/screens/admin/admin_panel_screen.dart';
+import 'package:klaussified/presentation/screens/landing/landing_page_screen.dart';
+import 'package:klaussified/presentation/screens/unsubscribe/unsubscribe_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -43,15 +47,23 @@ class AppRouter {
       final isAuthenticated = _auth.currentUser != null;
       final isGoingToSplash = state.matchedLocation == RouteNames.splash;
       final isGoingToAuth = state.matchedLocation == RouteNames.login ||
-                           state.matchedLocation == RouteNames.register;
+          state.matchedLocation == RouteNames.register;
+      final isGoingToLanding = state.matchedLocation == RouteNames.landing;
+      final isGoingToAbout = state.matchedLocation == '/about';
+      final isGoingToUnsubscribe = state.matchedLocation == RouteNames.unsubscribe;
 
-      // If not authenticated and trying to access protected routes, redirect to login
-      if (!isAuthenticated && !isGoingToAuth && !isGoingToSplash) {
-        return RouteNames.login;
+      // If not authenticated and trying to access protected routes, redirect to landing
+      if (!isAuthenticated &&
+          !isGoingToAuth &&
+          !isGoingToSplash &&
+          !isGoingToLanding &&
+          !isGoingToAbout &&
+          !isGoingToUnsubscribe) {
+        return RouteNames.landing;
       }
 
-      // If authenticated and trying to access auth screens, redirect to home
-      if (isAuthenticated && isGoingToAuth) {
+      // If authenticated and trying to access auth screens or landing, redirect to home
+      if (isAuthenticated && (isGoingToAuth || isGoingToLanding)) {
         return RouteNames.home;
       }
 
@@ -59,6 +71,16 @@ class AppRouter {
     },
     refreshListenable: GoRouterRefreshStream(_auth.authStateChanges()),
     routes: [
+      // Landing Page
+      GoRoute(
+        path: RouteNames.landing,
+        name: 'landing',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const LandingPageScreen(),
+        ),
+      ),
+
       // Splash Screen
       GoRoute(
         path: RouteNames.splash,
@@ -197,6 +219,40 @@ class AppRouter {
           key: state.pageKey,
           child: const AboutScreen(),
         ),
+      ),
+
+      // Settings Route
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+        ),
+      ),
+
+      // Admin Route
+      GoRoute(
+        path: '/admin',
+        name: 'admin',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const AdminPanelScreen(),
+        ),
+      ),
+
+      // Unsubscribe Route (no auth required)
+      GoRoute(
+        path: '/unsubscribe',
+        name: 'unsubscribe',
+        pageBuilder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          final type = state.uri.queryParameters['type'];
+          return MaterialPage(
+            key: state.pageKey,
+            child: UnsubscribeScreen(token: token, type: type),
+          );
+        },
       ),
     ],
 

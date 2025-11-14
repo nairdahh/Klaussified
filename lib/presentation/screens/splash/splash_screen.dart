@@ -34,10 +34,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (authState is AuthAuthenticated) {
       // Load groups before navigating to home
-      context.read<GroupBloc>().add(GroupLoadRequested(userId: authState.user.uid));
+      context
+          .read<GroupBloc>()
+          .add(GroupLoadRequested(userId: authState.user.uid));
       context.go(RouteNames.home);
     } else {
-      context.go(RouteNames.login);
+      context.go(RouteNames.landing);
     }
   }
 
@@ -54,10 +56,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Icons.card_giftcard,
               size: 100,
               color: AppColors.snowWhite,
-            )
-                .animate()
-                .fadeIn(duration: 600.ms)
-                .scale(
+            ).animate().fadeIn(duration: 600.ms).scale(
                   begin: const Offset(0.5, 0.5),
                   end: const Offset(1.0, 1.0),
                   duration: 600.ms,
@@ -74,10 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     fontWeight: FontWeight.bold,
                     fontSize: 42,
                   ),
-            )
-                .animate()
-                .fadeIn(delay: 300.ms, duration: 600.ms)
-                .slideY(
+            ).animate().fadeIn(delay: 300.ms, duration: 600.ms).slideY(
                   begin: 0.3,
                   end: 0,
                   delay: 300.ms,
@@ -94,10 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: AppColors.snowWhite.withOpacity(0.9),
                     fontSize: 16,
                   ),
-            )
-                .animate()
-                .fadeIn(delay: 600.ms, duration: 600.ms)
-                .slideY(
+            ).animate().fadeIn(delay: 600.ms, duration: 600.ms).slideY(
                   begin: 0.3,
                   end: 0,
                   delay: 600.ms,
@@ -117,9 +110,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   AppColors.snowWhite.withOpacity(0.8),
                 ),
               ),
-            )
-                .animate()
-                .fadeIn(delay: 900.ms, duration: 400.ms),
+            ).animate().fadeIn(delay: 900.ms, duration: 400.ms),
           ],
         ),
       ),

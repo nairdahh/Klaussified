@@ -290,17 +290,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Email (read-only)
-                  TextFormField(
-                    initialValue: user.email,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                    enabled: false,
-                  ),
-                  const SizedBox(height: 16),
-
                   // Username Field
                   TextFormField(
                     controller: _usernameController,
@@ -308,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       labelText: 'Username',
                       prefixIcon: Icon(Icons.person),
                       helperText:
-                          'Lowercase letters, numbers, and underscores only',
+                          'Letters, numbers, dots, and underscores',
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -321,7 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         return 'Username must be less than ${AppConstants.maxUsernameLength} characters';
                       }
                       if (!AppConstants.usernameRegex.hasMatch(value)) {
-                        return 'Username can only contain letters, numbers, and underscores';
+                        return 'It can only contain letters, numbers, dots, and underscores';
                       }
                       return null;
                     },

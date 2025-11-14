@@ -19,6 +19,14 @@ class UserModel with _$UserModel {
     @JsonKey(fromJson: _timestampFromJson, toJson: _timestampToJson)
         required DateTime updatedAt,
     @Default([]) List<String> authProviders,
+    // Email notification preferences
+    @Default(true) bool emailNotificationsEnabled,
+    @Default(true) bool emailInviteNotifications,
+    @Default(true) bool emailDeadlineNotifications,
+    // Browser notification preferences (placeholder)
+    @Default(true) bool browserNotificationsEnabled,
+    @Default(true) bool browserInviteNotifications,
+    @Default(true) bool browserDeadlineNotifications,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>

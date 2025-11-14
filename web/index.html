@@ -44,6 +44,7 @@
 
   <!-- CRITICAL: Unregister all service workers to force fresh load -->
   <script>
+    // Force clear all caches and service workers on every page load
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) {
@@ -62,7 +63,21 @@
       }
     }
 
-    
+    // Clear only theme-related localStorage if needed (version-based)
+    (function() {
+      const STORAGE_VERSION = '2.0';
+      const STORAGE_VERSION_KEY = '__app_storage_version__';
+      const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+
+      if (storedVersion !== STORAGE_VERSION) {
+        console.log('Clearing old theme localStorage due to version mismatch');
+        // Only clear theme-related keys, not ALL localStorage
+        localStorage.removeItem('flutter.isDarkMode');
+        localStorage.removeItem('flutter.themeVariant');
+        localStorage.removeItem('flutter.themeSystemVersion');
+        localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
+      }
+    })();
   </script>
 
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d42b801c797a44ff8ab7ff2e478de987"}'></script><!-- End Cloudflare Web Analytics -->

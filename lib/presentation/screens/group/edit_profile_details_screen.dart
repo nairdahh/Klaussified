@@ -180,10 +180,12 @@ class _EditProfileDetailsScreenState extends State<EditProfileDetailsScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'These details will only be visible to your Secret Santa to help them pick the perfect gift for you!',
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade300
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ],

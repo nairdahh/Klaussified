@@ -55,3 +55,4 @@ storage.rules
 
 /functions/node_modules/
 /functions/lib/
+/functions/src/config/admin.ts

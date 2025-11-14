@@ -80,10 +80,12 @@ class _RevealScreenState extends State<RevealScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
                       size: 80,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey.shade300
+                          : AppColors.textSecondary,
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -212,17 +214,21 @@ class _RevealScreenState extends State<RevealScreen> {
                           padding: const EdgeInsets.all(24.0),
                           child: Column(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.info_outline,
                                 size: 48,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey.shade300
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 '${assignedMember.displayName.isNotEmpty ? assignedMember.displayName : assignedMember.username} hasn\'t filled out their profile details yet.',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  color: AppColors.textSecondary,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.grey.shade300
+                                      : AppColors.textSecondary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),

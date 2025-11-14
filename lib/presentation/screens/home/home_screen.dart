@@ -8,7 +8,8 @@ import 'package:klaussified/business_logic/auth/auth_event.dart';
 import 'package:klaussified/business_logic/auth/auth_state.dart';
 import 'package:klaussified/core/theme/colors.dart';
 import 'package:klaussified/core/routes/route_names.dart';
-import 'package:klaussified/core/constants/app_version.dart';
+import 'package:klaussified/core/constants/admin_constants.dart';
+import 'package:klaussified/core/utils/snackbar_helper.dart';
 import 'package:klaussified/data/models/group_model.dart';
 import 'package:klaussified/data/repositories/invite_repository.dart';
 import 'package:klaussified/data/repositories/group_repository.dart';
@@ -47,35 +48,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Klaussified'),
+            title: const _AnimatedLogo(),
             actions: [
-              StreamBuilder<List>(
-                stream: _inviteRepository.streamUserInvites(user.uid),
-                builder: (context, snapshot) {
-                  final inviteCount = snapshot.data?.length ?? 0;
-                  return Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.mail_outline),
-                        onPressed: () => context.push(RouteNames.invitations),
-                        tooltip: 'Invitations',
-                      ),
-                      if (inviteCount > 0)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: const BoxDecoration(
-                              color: AppColors.christmasGreen,
-                              shape: BoxShape.circle,
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: StreamBuilder<List>(
+                  stream: _inviteRepository.streamUserInvites(user.uid),
+                  builder: (context, snapshot) {
+                    final inviteCount = snapshot.data?.length ?? 0;
+                    return Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.mail_outline),
+                          onPressed: () => context.push(RouteNames.invitations),
+                          tooltip: 'Invitations',
+                        ),
+                        if (inviteCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: const BoxDecoration(
+                                color: AppColors.christmasGreen,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -121,7 +125,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey.shade800
+                                    : Colors.grey.shade200,
                                 borderRadius: BorderRadius.circular(25),
                                 boxShadow: [
                                   BoxShadow(
@@ -141,7 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 indicatorSize: TabBarIndicatorSize.tab,
                                 dividerColor: Colors.transparent,
                                 labelColor: AppColors.snowWhite,
-                                unselectedLabelColor: AppColors.textSecondary,
+                                unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
                                 labelStyle: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -271,21 +279,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: const Text('Settings'),
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Settings feature coming soon!'),
-                      ),
-                    );
+                    context.push('/settings');
                   },
                 ),
+                if (AdminConstants.isAdmin(user.uid, user.email))
+                  ListTile(
+                    leading: const Icon(Icons.admin_panel_settings),
+                    title: const Text('Admin Panel'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(RouteNames.admin);
+                    },
+                  ),
                 const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text('Logout'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.read<AuthBloc>().add(const AuthLogoutRequested());
-                  },
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Logout'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.read<AuthBloc>().add(const AuthLogoutRequested());
+                    },
+                  ),
                 ),
                 const Divider(height: 1),
 
@@ -328,11 +344,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           webOnlyWindowName: '_blank',
                         )) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Could not open link'),
-                                backgroundColor: AppColors.error,
-                              ),
+                            SnackBarHelper.showError(
+                              context,
+                              message: 'Could not open link',
                             );
                           }
                         }
@@ -352,20 +366,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Version text
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0),
-                  child: Text(
-                    AppVersion.version,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary.withValues(alpha: 0.6),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
               ],
             ),
           ),
@@ -535,6 +535,36 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Animated Logo Widget with hover effect
+class _AnimatedLogo extends StatefulWidget {
+  const _AnimatedLogo();
+
+  @override
+  State<_AnimatedLogo> createState() => _AnimatedLogoState();
+}
+
+class _AnimatedLogoState extends State<_AnimatedLogo> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: AnimatedDefaultTextStyle(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+              color: AppColors.snowWhite,
+              fontWeight: FontWeight.bold,
+              letterSpacing: _isHovering ? 3.0 : 0.0,
+            ),
+        child: const Text('Klaussified'),
       ),
     );
   }
